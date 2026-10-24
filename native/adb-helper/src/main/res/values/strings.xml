@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Rokid ADB Helper</string>
+    <string name="title">ADB Helper · 설정 열기</string>
+    <string name="developer">개발자 옵션</string>
+    <string name="wifi">Wi-Fi 설정</string>
+    <string name="device_info">기기 정보</string>
+    <string name="settings">Android 설정</string>
+    <string name="refresh">상태 새로고침</string>
+    <string name="exit">종료</string>
+    <string name="idle">아래 버튼으로 시스템 설정 화면을 엽니다.</string>
+    <string name="dispatched">%1$s 열기를 요청했습니다. 화면이 없거나 바로 돌아오면 해당 펌웨어에서 제한할 수 있습니다.</string>
+    <string name="missing">%1$s 화면을 찾을 수 없습니다. 다른 설정 버튼을 시도하세요.</string>
+    <string name="denied">%1$s 화면 접근을 시스템이 거부했습니다. 앱이 이 제한을 해제하지는 않습니다.</string>
+    <string name="status">ADB 연결 성공 여부는 PC에서 확인하세요.</string>
+    <string name="summary">모델: %1$s\nAndroid %2$s / API %3$d\nADB 상태는 PC에서 확인하세요.</string>
+    <string name="guide">개발자 옵션 → 무선 디버깅 → 페어링 코드로 연결\n\n개발자 옵션이 잠겨 있으면 기기 정보 → 빌드 번호를 7번 눌러 보세요. 메뉴 존재와 접근 가능 여부는 펌웨어에 따라 다릅니다.\n\nPC와 안경을 같은 공유기에 연결하고, 페어링 화면의 IP·포트로 adb pair를 실행합니다. 연결용 포트는 별도일 수 있습니다.\n\n이 앱은 설정 화면만 엽니다. ADB를 자동 활성화하거나 포트를 열거나 페어링 코드를 수집하지 않습니다. 작업 후 무선 디버깅을 꺼 주세요.</string>
+    <string name="body">%1$s\n\n최근 요청:\n%2$s\n\n%3$s</string>
+</resources>

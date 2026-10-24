@@ -1,0 +1,2 @@
+run_id,condition,recorded_at_kst,elapsed_minutes,glasses_percent,watch_percent,phone_percent,brightness_setting,screen_state,watch_connected,phone_connected,charging,firmware_alias,app_revision,notes_redacted
+example-A-01,A,2026-10-24T12:00:00+09:00,0,100,100,100,record_setting,off,false,true,false,local_only,record_commit,EXAMPLE_NOT_A_MEASUREMENT

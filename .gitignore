@@ -1,0 +1,43 @@
+# Credentials, identity and local device connection details
+.env
+.env.*
+*.local.json
+*.lc
+*.pem
+*.key
+*.jks
+*.keystore
+adbkey*
+adb_known_hosts.pb
+credentials*.json
+*service-account*.json
+google-services.json
+local.properties
+keystore.properties
+# Android output and local tools
+**/build/
+**/.gradle/
+**/.cxx/
+**/.kotlin/
+.toolchain/
+dist/
+*.apk
+*.aab
+*.aar
+*.hprof
+# Private documents and measurements
+private/
+measurements/private/
+*.pdf
+logs/
+*.log
+*.har
+*.pcap
+*.pcapng
+adb-*.txt
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
