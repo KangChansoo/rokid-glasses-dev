@@ -1,38 +1,40 @@
-# 배터리 측정 체크리스트
+# Battery measurement checklist
 
-짧은 시간에 표시 잔량이 10% 줄었다는 한 번의 관찰만으로 정상/불량을 판단하지 않습니다. 우선 100% 충전 후 조건을 맞춰 반복 비교합니다. 제조사 정격 사용 시간이나 완전 방전 수명을 이 실험으로 추정하지 않습니다.
+English | [한국어](BATTERY.ko.md)
 
-## 준비
+One short observation of a ten-percentage-point drop cannot establish a defect or normal endurance. Start at 100% and repeat comparable conditions. This experiment does not establish manufacturer-rated or full-discharge lifetime.
 
-- [ ] 글래스·워치·휴대폰을 각각 충전하고 시작 잔량 기록.
-- [ ] 글래스를 100%까지 충전한 뒤 충전 해제. 초기 잔량 변화와 안정된 구간을 구분.
-- [ ] 모델/펌웨어/Hi Rokid/WearMouse/휴대폰 OS, 앱 commit 또는 APK 버전 기록.
-- [ ] 밝기, 볼륨, Wi-Fi, Bluetooth 연결 대상, 주변 온도, 실내/실외 조건 고정.
-- [ ] 업데이트·리소스 다운로드·사진·녹음·화면 녹화를 완료하거나 별도 실험으로 분리.
-- [ ] 측정 시각은 Asia/Seoul 기준 ISO 형식으로 기록. 5분 간격으로 잔량 확인하되 확인을 위한 화면 사용 시간을 최소화.
-- [ ] 걷기/운전 중이 아닌 정지한 안전한 환경에서 측정.
+## Preparation
 
-## 조건별 비교
+- [ ] Charge the glasses, watch and phone; record each starting level.
+- [ ] Charge the glasses to 100%, unplug, and distinguish the initial change from a steadier interval.
+- [ ] Record model, firmware, Hi Rokid, WearMouse, phone OS and app commit/APK version.
+- [ ] Keep brightness, volume, Wi-Fi, Bluetooth peers, temperature and indoor/outdoor conditions consistent.
+- [ ] Finish updates/resource downloads/photo/audio/screen recording first, or test them as separate workloads.
+- [ ] Use ISO timestamps in Asia/Seoul. If sampling every five minutes, minimize the screen use caused by checking.
+- [ ] Measure while stationary, not walking or driving.
 
-가능하면 매 조건을 비슷한 시작 잔량에서 20~30분씩 3회 반복합니다. 100% 부근의 표시가 오래 유지될 수 있으므로 같은 잔량 구간끼리도 비교합니다. 반복 충전 중 휴식 시간을 둡니다.
+## Compare conditions
 
-| 조건 | 화면 | 워치 | 휴대폰/기능 | 비교 목적 |
+Where practical, repeat each condition three times for 20–30 minutes at similar charge levels. The gauge may remain at 100% for a while; compare matching charge ranges as well. Allow rest between repeated charging sessions.
+
+| Condition | Display | Watch | Phone / workload | Purpose |
 |---|---|---|---|---|
-| A | 꺼짐/일반 대기 | 미연결 | Hi Rokid 연결, 다운로드 없음 | 기준선 |
-| B | Hello World 정적 표시 | 미연결 | 동일 | 화면 영향 |
-| C | B와 동일 | WearMouse 연결, 입력 없음 | 동일 | 연결 유지 영향 |
-| D | 동일 | 분당 같은 횟수 클릭 | 동일 | 입력 영향 |
-| E (이후) | CXR-L Custom View | 가능 시 연결 | 정적 화면 1회 전달 | SDK 경로 영향 |
-| F (이후) | 완료 답변 표시 | 동일 | 일정 간격의 mock 요청 | 네트워크/갱신 영향 |
+| A | Off / normal standby | Disconnected | Hi Rokid connected, no downloads | Baseline |
+| B | Static Hello World | Disconnected | Same | Display contribution |
+| C | Same as B | WearMouse connected, idle | Same | Connection maintenance |
+| D | Same | Fixed clicks per minute | Same | Input contribution |
+| E (future) | CXR-L Custom View | Connected if supported | One static update | SDK-path comparison |
+| F (future) | Completed-answer display | Same | Fixed-interval mock requests | Network/update contribution |
 
-평균 소모율은 `시작 잔량 - 종료 잔량`을 경과 시간(시간)으로 나눈 **%p/시간**입니다. 배터리 %는 정수 단위·비선형 추정치이므로 5분 결과를 그대로 종일 사용 시간으로 외삽하지 않습니다. 중앙값, 범위, 원래 측정 시간을 함께 기록합니다. 충전 중인 행은 분석에서 제외합니다.
+Average drain is `(start level - end level) / elapsed hours`, in **percentage points per hour**. Battery percentages are integer, nonlinear estimates: do not extrapolate a five-minute interval into all-day endurance. Report median, range and original durations. Exclude charging intervals from analysis.
 
-## 관찰과 중단
+## Observations and stopping
 
-- [ ] 초기 100→90 구간 소요 시간과 이후 같은 길이 구간을 분리.
-- [ ] 화면 꺼짐·켜짐, 자동 절전, BT 재연결, 앱 포그라운드 전환 시각 기록.
-- [ ] 글래스뿐 아니라 Watch7와 휴대폰 잔량도 기록.
-- [ ] 발열/시스템 경고/예상 밖 종료가 나타나면 실험을 중단하고 제조사 안내에 따름.
-- [ ] 비슷한 조건에서 급격한 소모가 반복되면 개인 실험 기록과 함께 공식 지원에 확인. 계정 정보/SN은 공개 issue에 올리지 않음.
+- [ ] Separate time from 100 to 90% from later intervals of equal length.
+- [ ] Record display on/off, sleep, Bluetooth reconnection and foreground changes.
+- [ ] Track Watch7 and phone charge as well as the glasses.
+- [ ] Stop if heat, system warnings or unexpected shutdown occurs; follow manufacturer guidance.
+- [ ] If rapid drain repeats under comparable conditions, use private measurements when contacting official support. Do not post account information or serial numbers in public issues.
 
-양식: [battery-template.csv](../measurements/battery-template.csv). 실제 기록은 `measurements/private/`에 저장합니다.
+Template: [battery-template.csv](../measurements/battery-template.csv). Store real measurements under ignored `measurements/private/`.

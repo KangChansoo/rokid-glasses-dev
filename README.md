@@ -1,45 +1,72 @@
 # Rokid Glasses Dev
 
-화면이 있는 Rokid AI Glasses에서 직접 실행할 **Android 앱과 개발 도구**를 만듭니다. APK 설치부터 무선 ADB 연결까지 직접 확인한 경로에서 시작합니다.
+English | [한국어](README.ko.md)
 
-## 처음 시작하기
+An ongoing personal project to develop Android apps for **Rokid AI Glasses** and explore **embedded systems and AI** through hands-on development.
 
-1. [개발 환경](docs/DEVELOPMENT.md)을 준비하고 `./scripts/build-native.ps1`로 APK를 만듭니다.
-2. `dist/adb-helper-android-debug.apk`를 폰으로 옮긴 뒤 **Hi Rokid → 홈 → 도구 상자 → 안경 앱 관리**에서 안경에 설치합니다.
-3. Helper의 **기기 정보 → 빌드 번호 7번 → 개발자 옵션 → 무선 디버깅** 순서로 설정합니다.
-4. [ADB 가이드](docs/ADB.md)에 따라 PC와 페어링하고 연결합니다. 기기 주소·포트·코드는 본인 화면의 값을 사용합니다.
-5. GPT Viewer와 Paper Viewer는 [앱 설명](docs/APPS.md)에 따라 별도로 검증합니다.
+A custom PDF viewer prototype is running on the glasses. Current work focuses on readability, navigation and file handling. Native C/NDK processing, smartphone integration and AI applications are future goals.
 
-**실기기 확인:** Helper 설치·Android 설정 열기·개발자 옵션 활성화·무선 ADB 인증 및 접속 성공. 연결 후 확인한 기기는 Rokid `RG-glasses`, Android 12 / API 32입니다. 두 Viewer의 실제 표시·입력·PDF 열기는 아직 검증 대기입니다.
+## Progress
 
-## 구성
+- [x] Use a Galaxy Watch as a remote controller
+- [x] Set up wireless ADB
+- [x] Set up AnExplorer for file management
+- [ ] Develop a PDF viewer
+- [ ] Develop a GPT viewer
+- [ ] Develop C/NDK modules
+- [ ] Add smartphone integration
+- [ ] Measure memory usage, latency and power consumption
+- [ ] Explore camera and AI applications
+
+Viewer prototypes exist; the unchecked viewer items represent ongoing development. AnExplorer is an optional third-party tool: the installed app shows a 7-day Pro trial, and continued free wireless transfer is not verified. See [file transfer](docs/FILE_TRANSFER.md).
+
+## What works today
+
+| Component | Current state |
+|---|---|
+| ADB Helper | Installed on the glasses; opens Android settings. Developer options enabled through Build number. |
+| Wireless ADB | Pairing, authenticated connection and device information confirmed on Rokid RG-glasses / Android 12 / API 32. |
+| Galaxy Watch7 / WearMouse | Bluetooth remote input established; compatibility with every viewer control still needs validation. |
+| Paper Viewer | Actual PDF page rendering confirmed on the glasses. Reading UI and file handling remain prototype-level. |
+| GPT Viewer | Built with sample responses; live AI integration and device validation are pending. |
+
+Current apps use **Java and standard Android APIs**. There is no C/NDK processing, camera AI, phone companion or live API integration yet. GPT Viewer does not access existing ChatGPT conversations.
+
+## Get started
+
+1. Follow [development setup](docs/DEVELOPMENT.md) and run `./scripts/build-native.ps1`.
+2. Copy `dist/adb-helper-android-debug.apk` to your phone and install it **on the glasses** through **Hi Rokid → Home → Toolbox → Glasses App Management**. Labels may vary by app language/version.
+3. In Helper, open **기기 정보 (Device info) → Build number**, tap it seven times, return to **개발자 옵션 (Developer options)**, then enable Wireless debugging.
+4. Use the glasses' current pairing/connection endpoints in the [ADB guide](docs/ADB.md).
+5. Follow [app usage](docs/APPS.md) and [PDF transfer](docs/FILE_TRANSFER.md) to test a document you own. No special folder is required when opening through a file manager.
+
+## Repository
 
 ```text
 native/
-  adb-helper/            Android 설정을 여는 진단 APK
-  gpt-viewer/            Hello World / 가상 답변 데모 APK
-  paper-viewer/          안경 로컬 PDF 페이지 뷰어 APK
-  common/                공통 녹색 화면과 Android 버튼
+  adb-helper/            Android settings launcher
+  gpt-viewer/            Hello World / sample-response viewer
+  paper-viewer/          Local PDF page viewer
+  common/                Shared green-on-black Android UI
 scripts/
-  build-native.ps1       세 APK 빌드·검사·체크섬 생성
-  adb-info.ps1           명시한 ADB 대상의 모델·버전 읽기
-  check.py               문서 링크·JSON·XML 확인
-docs/                    시작 방법·설계·검증·로드맵
-measurements/            개인정보 없는 측정 양식
+  build-native.ps1       Build, lint, unit tests and APK checksums
+  adb-info.ps1           Read model/version from an explicit ADB target
+  check.py               Markdown links, JSON and XML checks
+docs/                    English and Korean guides
+measurements/            Empty battery and input measurement templates
 ```
 
-현재 앱은 Java로 작성했습니다. 필요한 처리 모듈에 **C/NDK/JNI**를 도입하고 Python은 PC 실험·분석·도구에 활용하는 방향입니다. 아직 C 코드·비전 처리·폰 companion은 없습니다.
+APK output, real papers, extracted text, device identifiers, private screenshots, ADB keys, API keys and signing keys are excluded from Git. PDF files are not bundled. The current viewer creates one private PDF copy; opening originals directly is a planned improvement, not an implemented feature. See [security](SECURITY.md).
 
-GPT Viewer의 답변은 데모이며 실제 GPT 연결이 아닙니다. **ChatGPT 앱의 기존 대화와 OpenAI API 응답은 별도**입니다. 현재 앱은 기존 대화나 완료 이벤트를 읽지 않습니다.
+## Guides
 
-소스는 이 저장소에서 관리하고 APK·PDF·개인 논문 본문·ADB 키·IP·기기 식별자·API 키는 커밋하지 않습니다. [보안 가이드](SECURITY.md)를 따릅니다. SDK/도구 배포본과 개인 서명 키도 포함하지 않습니다.
+- [Wireless ADB](docs/ADB.md)
+- [File transfer and AnExplorer limitations](docs/FILE_TRANSFER.md)
+- [Development and builds](docs/DEVELOPMENT.md)
+- [Apps and current limitations](docs/APPS.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Validation record](docs/VALIDATION.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Battery measurements](docs/BATTERY.md)
 
-- [무선 ADB 시작과 두 줄 표시 설명](docs/ADB.md)
-- [개발 환경·빌드](docs/DEVELOPMENT.md)
-- [앱 사용법](docs/APPS.md)
-- [전체 구조](docs/ARCHITECTURE.md)
-- [검증 기록](docs/VALIDATION.md)
-- [로드맵](docs/ROADMAP.md)
-- [배터리 측정](docs/BATTERY.md)
-
-Independent project; not affiliated with Rokid, OpenAI or WearMouse. Vendor software retains its own terms.
+Independent project; not affiliated with Rokid, OpenAI, WearMouse or AnExplorer. Third-party software retains its own terms.

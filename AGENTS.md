@@ -9,4 +9,6 @@ Develop standalone Android APKs under native/. Use Hi Rokid Toolbox for the firs
 - Use an explicit adb -s target when more than one transport is present. A manual IP connection and an mDNS service can represent the same physical device. Never choose a write target merely by list order.
 - Preserve native Android Back/mouse/Enter behavior. Do not silently add permissions or broad storage access.
 - For source/docs run python scripts/check.py. For Android changes run scripts/build-native.ps1 (assemble/lint all apps and Paper Viewer unit tests); inspect final APK manifests and signatures.
-- Record build checks and hardware observations separately. ADB Helper and wireless ADB have device evidence; Viewer display/input/PDF flows still require hardware validation.
+- Record build checks and hardware observations separately. ADB Helper, wireless ADB and PDF page rendering have device evidence. GPT device display, complete input mappings, PDF usability/restoration and controlled performance measurements still need validation.
+
+- User-facing documentation is English by default with complete .ko.md siblings and reciprocal language links. Update both versions together. App UI localization is separate.

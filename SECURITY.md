@@ -1,11 +1,17 @@
-# 공개 저장소와 기기 자료
+# Public source and private device data
 
-실제 PDF·추출 본문·개인 대화·계정 정보·기기 일련번호·MAC·IP·페어링 코드·ADB 키·인증 토큰·로그·캡처·서명 키는 커밋하지 않습니다. Git 제외는 이미 추적된 파일이나 이력을 지우지 않으므로 공개 전 staged diff와 파일 목록을 확인합니다.
+English | [한국어](SECURITY.ko.md)
 
-현재 세 APK에는 네트워크·카메라·마이크·계정·위치·전체 저장소 권한이 없습니다. Helper는 공개 설정 화면만 열며 ADB를 직접 켜지 않습니다. Paper Viewer는 선택 문서의 내부 사본 한 부를 보관하고 원본을 변경하지 않습니다. 백업은 비활성화하며 파일/렌더링 크기를 제한합니다.
+Do not commit real PDFs, extracted text, conversations, account data, device serials, MAC/IP addresses, pairing codes, ADB keys, tokens, private logs/screenshots or signing keys. Git ignore rules do not remove tracked files or history; inspect the staged diff and tracked file list before publishing.
 
-ADB는 신뢰하는 PC와 네트워크에서 본인이 승인해 페어링합니다. 코드는 터미널 프롬프트에 직접 입력합니다. 주소·포트는 로컬 변수에만 두고 접속 정보나 로그를 공개하지 않습니다. 여러 transport가 있으면 -s로 대상을 지정한 뒤 작업합니다. 작업 후 안경의 무선 디버깅을 끕니다. PC 연결 해제는 기기 설정을 끄는 것과 다릅니다.
+Current APKs declare no network, camera, microphone, account, location or all-files permissions. Helper opens public settings screens only and does not enable ADB itself. Paper Viewer keeps one private copy of the selected PDF without modifying the original. Backups are disabled and file/rendering sizes are bounded.
 
-현재 API 연결은 없습니다. 이후 OpenAI API를 연동할 때 키를 APK, Android BuildConfig/resources/assets, GitHub나 클라이언트에 넣지 않습니다. 키 유출 시 서비스에서 폐기·재발급을 먼저 하고 필요한 이력 정리는 별도로 진행합니다.
+AnExplorer is external software with its own permissions, licensing and data practices. A storage permission granted to it does not grant the same permission to our apps. Its Pro trial is not a guarantee of free transfer after expiry. See [file transfer](docs/FILE_TRANSFER.md).
 
-APK와 SDK/JDK/Gradle 배포본은 Git에 넣지 않습니다. 공식 Gradle wrapper JAR만 검증된 개발 부트스트랩으로 포함합니다. debug/release 서명 키는 로컬 개발 도구에서 관리하며 업데이트할 때 동일 서명을 사용합니다.
+Pair ADB on a trusted PC/network with user approval. Enter codes at the terminal prompt; keep endpoints in local variables and do not publish connection data/logs. Specify an explicit -s target when multiple transports exist. After work, turn off Wireless debugging on the glasses; disconnecting the PC is not the same action.
+
+There is no API connection yet. Future integration must not place OpenAI keys in APKs, BuildConfig/resources/assets, client code or GitHub. If a credential leaks, revoke/replace it at the provider first and address history separately.
+
+Do not commit APKs or SDK/JDK/Gradle distributions. The verified official Gradle wrapper JAR is the development bootstrap exception. Keep debug/release signing keys in local tooling and use the same signing identity for updates.
+
+Public visual examples must use synthetic documents. Do not publish the user's real-paper screenshots or surrounding personal/device information.

@@ -1,13 +1,33 @@
-# 개발 로드맵
+# Development roadmap
 
-| 단계 | 상태 | 다음 확인 |
+English | [한국어](ROADMAP.ko.md)
+
+## Checklist
+
+- [x] Use a Galaxy Watch as a remote controller
+- [x] Set up wireless ADB
+- [x] Set up AnExplorer for file management
+- [ ] Develop a PDF viewer
+- [ ] Develop a GPT viewer
+- [ ] Develop C/NDK modules
+- [ ] Add smartphone integration
+- [ ] Measure memory usage, latency and power consumption
+- [ ] Explore camera and AI applications
+
+The list follows the project's public progress summary. Unchecked viewer work includes improving existing prototypes; it does not mean no code exists. AnExplorer's trial is not a guarantee of ongoing free transfer.
+
+## Next verification
+
+| Area | Evidence today | Next step |
 |---|---|---|
-| 개발 연결 | Helper 및 무선 ADB 실기기 성공 | 재연결·재부팅 시 주소/포트 변화 |
-| GPT Viewer | Java 데모 빌드 준비 | 표시·한글·입력·Back |
-| Paper Viewer | PDF 렌더링 코드·JVM 테스트 준비 | 데모·실제 PDF·파일 선택·확대·입력 |
-| 배터리 | 측정 양식 제공 | 100%부터 조건별 반복 측정 |
-| C 처리 모듈 | 미구현 | 실제 필요한 처리 선정 후 NDK/JNI·버퍼·스레드·성능 |
-| 카메라·비전 | 미구현 | 공식 API/권한/자원 수명 확인 후 별도 앱 실험 |
-| 폰 연동·답변 표시 | 미구현 | CXR-L 공식 지원 범위 확인 후 mock 데이터부터 |
+| Development connection | Helper and wireless ADB verified on the glasses | Reconnection/reboot and changing endpoints |
+| Watch input | Galaxy Watch7 / WearMouse remote input established | Per-app click, navigation and Back behavior |
+| File management | AnExplorer installed; file permission setup confirmed | Confirm post-trial limits or select an alternative |
+| PDF Viewer | Actual document rendering confirmed | Reading UI, direct-original access, navigation and resource cleanup |
+| GPT Viewer | Java sample-response prototype builds | Device display/input, then real response delivery |
+| Performance | Templates available; no controlled baseline | Measure a baseline and repeat throughout development |
+| C processing | Not implemented | Choose a useful workload; define NDK/JNI, buffer and thread boundaries |
+| Phone / AI | Not implemented | Verify supported public contracts; start with mock data |
+| Camera / AI | Not implemented | Verify permissions, frame/resource lifetime and processing location |
 
-한 번에 기능 하나를 추가하고 코드·빌드·기기 검증을 나눠 기록합니다. 실제 논문과 개인 대화·키는 계속 공개 저장소 밖에 둡니다. 기존 ChatGPT 대화와 OpenAI API 요청은 별개입니다.
+Make one change at a time and separate source, build and device evidence. Keep private papers, conversations and keys out of Git. Existing ChatGPT conversations are separate from application API requests.

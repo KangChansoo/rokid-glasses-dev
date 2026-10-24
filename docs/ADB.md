@@ -1,27 +1,29 @@
-# 무선 ADB: 처음부터 연결하기
+# Wireless ADB: from the first APK to a connection
 
-ADB는 PC에서 안경의 앱을 설치·실행하고 파일을 전송하거나 로그를 확인하는 Android 개발 연결입니다. 안경에 직접 실행하는 APK로 설정 화면을 열어, 개발 케이블 없이 무선 연결한 경로를 기록합니다.
+English | [한국어](ADB.ko.md)
 
-## 1. 첫 APK 설치
+ADB connects a development PC to Android on the glasses for app installation, commands, file transfer and logs. This guide records a working wireless setup using a settings-launcher APK, without a development cable.
 
-1. [개발 환경](DEVELOPMENT.md)에서 빌드한 `dist/adb-helper-android-debug.apk`를 휴대폰으로 복사합니다.
-2. Hi Rokid **홈 → 도구 상자 → 안경 앱 관리**에서 APK를 선택해 **안경에 설치**합니다. 폰 자체에 설치하면 폰 설정이 열리므로 설치 대상을 구분합니다.
-3. 안경에서 **Rokid ADB Helper**를 실행합니다. Android 설정, 기기 정보, Wi-Fi, 개발자 옵션 화면을 여는 버튼이 있습니다.
+## 1. Install the first APK
 
-## 2. 개발자 옵션 활성화: 이번 기기에서 확인한 핵심 단계
+1. Build `dist/adb-helper-android-debug.apk` using [development setup](DEVELOPMENT.md), then copy it to your phone.
+2. In Hi Rokid, open **Home → Toolbox → Glasses App Management** and install the APK **on the glasses**. Installing it on the phone opens the phone's settings instead. Menu names can vary by version/language.
+3. Launch **Rokid ADB Helper** on the glasses. The buttons open Android settings, device information, Wi-Fi and developer options. The current app labels are Korean: **Android 설정**, **기기 정보**, **Wi-Fi 설정**, **개발자 옵션**.
 
-처음에는 개발자 옵션 버튼만 열리지 않았고 다른 설정 화면은 열렸습니다. 아래 순서로 활성화한 뒤 개발자 옵션에 들어갔습니다.
+## 2. Enable developer options
 
-1. Helper → **기기 정보**를 엽니다.
-2. **빌드 번호 / Build number**를 7번 눌러 개발자 활성화 메시지를 확인합니다.
-3. Helper로 돌아와 **개발자 옵션**을 다시 엽니다.
-4. **무선 디버깅 / Wireless debugging**을 켭니다. 스위치 옆 항목 이름을 누르면 상세 화면에 들어갈 수 있습니다.
+On the tested device, only the Developer options button initially failed to open. Other settings pages were available. This sequence enabled it:
 
-Hi Rokid의 ‘안경 ADB 디버깅’과 Android 설정의 ‘무선 디버깅’은 구분합니다. IP를 알아냈거나 충전 케이블을 꽂았다는 사실만으로 ADB 접속이 열리지는 않습니다. 이 경로는 현재 사용 기기에서 확인했으며 모든 모델·펌웨어를 보장하지 않습니다.
+1. In Helper, open **기기 정보 (Device info)**.
+2. Tap **Build number / 빌드 번호** seven times and confirm the developer activation message.
+3. Return to Helper and open **개발자 옵션 (Developer options)**.
+4. Enable **Wireless debugging**. Tap the setting's label, separately from its toggle, to open its details.
 
-## 3. PC 준비와 페어링
+Hi Rokid's glasses ADB toggle and Android's Wireless debugging setting are separate. An IP address or a connected charging cable does not establish ADB access. This procedure is verified on one device, not every model or firmware.
 
-PC와 안경을 같은 공유기/LAN에 연결합니다. PC는 유선이어도 되지만 게스트 네트워크·클라이언트 격리는 검색·접속을 막을 수 있습니다. [공식 Platform Tools](https://developer.android.com/tools/releases/platform-tools)를 사용합니다.
+## 3. Prepare the PC and pair
+
+Use [official Platform Tools](https://developer.android.com/tools/releases/platform-tools). Connect the glasses and PC to the same router/LAN; the PC may be wired. Guest networks or client isolation can block discovery/connections.
 
 ```powershell
 adb version
@@ -29,22 +31,22 @@ adb devices -l
 adb mdns services
 ```
 
-안경의 무선 디버깅 상세 화면에서 **페어링 코드로 기기 페어링**을 엽니다. 이 화면의 **IP·페어링 포트·6자리 코드**가 필요합니다. 화면을 열어 둔 채 아래처럼 입력합니다.
+On the glasses, open **Pair device with pairing code** in Wireless debugging. Keep that screen open; it provides a pairing IP, port and six-digit code.
 
 ```powershell
-$pairEndpoint = Read-Host '안경의 페어링 IP:포트'
+$pairEndpoint = Read-Host 'Pairing IP:port from the glasses'
 adb pair $pairEndpoint
-# 이어지는 프롬프트에 안경 화면의 코드를 직접 입력
+# Enter the code from the glasses at the prompt.
 ```
 
-`Successfully paired`는 인증 완료입니다. 코드를 명령줄 인자로 붙이거나 파일·Git·스크린샷에 저장하지 않습니다. 만료되면 화면을 다시 열어 새 코드와 포트를 사용합니다.
+`Successfully paired` confirms authentication. Do not put the code in command arguments, files, Git or screenshots. If it expires, reopen the dialog and use the new code and port.
 
-## 4. 연결과 확인
+## 4. Connect and identify the device
 
-페어링이 끝나면 자동 연결될 수 있습니다. 자동 연결이 없으면 무선 디버깅 메인 화면 또는 `adb mdns services`의 **_adb-tls-connect._tcp**에 표시된 **연결 IP:포트**를 사용합니다. 페어링 서비스는 **_adb-tls-pairing._tcp**이며 용도가 다릅니다.
+Pairing may trigger automatic connection. Otherwise, use the connection IP:port on the main Wireless debugging page or the **_adb-tls-connect._tcp** service from `adb mdns services`. The **_adb-tls-pairing._tcp** service is for pairing, not connection.
 
 ```powershell
-$deviceEndpoint = Read-Host '안경의 연결 IP:포트'
+$deviceEndpoint = Read-Host 'Connection IP:port from the glasses'
 adb connect $deviceEndpoint
 adb devices -l
 adb -s $deviceEndpoint shell getprop ro.product.model
@@ -52,53 +54,54 @@ adb -s $deviceEndpoint shell getprop ro.build.version.release
 adb -s $deviceEndpoint shell getprop ro.build.version.sdk
 ```
 
-페어링 포트와 연결 포트는 서로 다를 수 있습니다. 기본 포트 5555를 가정하지 않습니다. 네트워크·무선 디버깅 재시작 시 주소·포트가 바뀔 수 있습니다. `device` 상태와 기기 모델을 확인한 뒤 설치나 파일 쓰기를 진행합니다.
+Pairing and connection ports can differ. Do not assume port 5555. IPs and ports can change after network or wireless-debugging restarts. Confirm `device` state and the model before installing or writing files.
 
-확인한 모델은 **Rokid RG-glasses, Android 12 / API 32**입니다. 실제 IP·MAC·일련번호·서비스 이름·페어링 코드는 이 문서에 기록하지 않습니다.
+The tested device reports **Rokid RG-glasses, Android 12 / API 32**. Real IPs, MACs, serials, service identifiers and pairing codes are not recorded here.
 
-## 5. adb devices에 두 줄이 나오는 이유
+## 5. Why adb devices can show two entries
 
-수동 IP 접속과 mDNS 자동 접속이 같은 기기를 서로 다른 transport 이름으로 등록할 수 있습니다. 아래는 **실제 기기와 무관한 예시**입니다.
+A manual IP connection and an mDNS automatic connection can register separate transports to the same device. This example does not identify a real device:
 
 ```text
 192.0.2.10:35000                           device
 adb-EXAMPLE._adb-tls-connect._tcp          device
 ```
 
-이번 기기는 두 transport의 모델과 내부 일련번호를 메모리에서 비교해 **같은 물리적 안경**임을 확인했습니다. 식별값 원문은 저장하지 않았습니다. 일반적으로 두 줄이라는 이유만으로 언제나 같은 기기라고 판단하면 안 됩니다.
+For the tested glasses, model and internal serial comparisons in memory confirmed the same physical device. Raw identifiers were not saved. Two entries alone do not prove that they always represent one device.
 
-두 항목이 있으면 `adb shell` 등은 `more than one device/emulator`로 실패할 수 있습니다. **`-s`로 사용할 항목 하나를 지정**하면 됩니다. `-s`에는 `adb devices` 첫 열의 IP:포트 또는 mDNS 이름 전체를 그대로 넣습니다.
+Commands without a target may fail with `more than one device/emulator`. Use **`-s`** with one complete first-column value from `adb devices`: either IP:port or the mDNS name.
 
 ```powershell
-# 두 transport가 있어도 대상을 명확히 지정
 ./scripts/adb-info.ps1 -Serial $deviceEndpoint
 adb -s $deviceEndpoint install -r ./dist/gpt-viewer-android-debug.apk
 ```
 
-수동 연결만 정리하려면 `adb disconnect $deviceEndpoint`를 실행하고 목록을 다시 봅니다. mDNS 항목이 남아 있으면 그것을 `-s`로 사용할 수 있습니다. 자동 재연결 때문에 목록이 바뀔 수 있으므로 한 줄로 만드는 것보다 대상 지정이 확실합니다. 이 안내는 연결을 강제로 끊거나 PC의 전역 mDNS 설정을 바꾸지 않습니다.
+To remove a manual connection, run `adb disconnect $deviceEndpoint` and inspect the list again. If the mDNS entry remains, it can be used with `-s`. Automatic reconnection can change the list; specifying a target is more reliable than trying to force one entry. No global PC mDNS setting needs to be changed.
 
-## 6. 읽기 전용 확인 도구
+## 6. Read-only information helper
 
 ```powershell
 ./scripts/adb-info.ps1 -Serial $deviceEndpoint
 ```
 
-모델·제조사·Android 버전/API만 읽습니다. Serial 매개변수에는 실제 하드웨어 일련번호를 알아낼 필요 없이 `adb devices`의 첫 열을 사용합니다. 여러 항목이 있는데 대상을 생략하면 중단합니다. 앱 설치·파일 전송·설정 변경·ADB 서버 재시작은 하지 않습니다. 연결 이름은 화면에만 표시하며 로그 파일을 만들지 않습니다.
+It reads model, manufacturer, Android version and API only. The Serial parameter takes the first column from `adb devices`; it does not require discovering the hardware serial. If multiple transports exist and no target is supplied, it stops. It does not install apps, transfer files, change settings, restart the ADB server or write logs.
 
-## 7. 종료·다시 연결
+## 7. Disconnect and reconnect
 
-작업 후 `adb disconnect $deviceEndpoint`로 PC 연결을 해제하고, 안경 설정의 무선 디버깅도 끕니다. disconnect만으로 기기 쪽 기능이 꺼지지는 않습니다. 다음 작업 때는 무선 디버깅을 켜고 현재 주소·포트를 확인합니다. PC 페어링이 유지되어 있으면 다시 코드를 입력할 필요가 없을 수 있습니다. 초기화·인증 해제·PC 키 변경 후에는 재페어링합니다.
+After use, disconnect the PC transport and turn off Wireless debugging on the glasses. `adb disconnect` does not turn off the device setting. For the next session, enable Wireless debugging and check its current connection endpoint.
 
-## Helper의 범위
+**A dropped connection does not necessarily erase pairing.** A retained pairing may reconnect without a new code. Factory reset, revoked authorization or changed PC keys can require pairing again. An `offline` or missing transport alone is not proof that pairing was lost.
 
-Helper는 공개 Android Settings Intent만 요청합니다. ADB 자동 활성화, 설정 쓰기, 루트, 접근성 서비스, 숨겨진 API, 포트 개방 또는 코드 수집은 없습니다. 선언 권한 0개이며 모델/Android 버전만 화면에 표시합니다. 일반 앱이 읽는 ADB 설정값이 실제 상태를 반영하지 않을 수 있어 상태 추정 표시도 하지 않습니다.
+## Helper boundaries
 
-다른 펌웨어에서 화면이 없거나 접근이 거부되면 그 결과를 표시합니다. 설정 화면의 존재·색상·터치 매핑은 펌웨어에 따라 다릅니다. 시스템이 차단한 경우 이 APK로 제한을 해제하지 않습니다.
+Helper requests public Android Settings actions only. It does not automatically enable ADB, write settings, use root/accessibility/hidden APIs, open ports or collect codes. It declares no permissions and displays model/Android version only. It does not infer ADB status from settings values that may be restricted for third-party apps.
 
-## 공식 근거
+Missing or denied settings screens are reported. Availability, appearance and input depend on firmware. This APK cannot remove system restrictions.
 
-- [Android 개발자 옵션 활성화](https://developer.android.com/studio/debug/dev-options#enable)
-- [Android 무선 ADB와 대상 지정](https://developer.android.com/tools/adb)
-- [Settings Intent](https://developer.android.com/reference/android/provider/Settings#ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
-- [ADB mDNS 구조](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/adb_wifi.md)
+## Official references
+
+- [Enable Android developer options](https://developer.android.com/studio/debug/dev-options#enable)
+- [Wireless ADB and target selection](https://developer.android.com/tools/adb)
+- [Settings actions](https://developer.android.com/reference/android/provider/Settings#ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+- [ADB mDNS architecture](https://android.googlesource.com/platform/packages/modules/adb/+/HEAD/docs/dev/adb_wifi.md)
 - [Rokid Toolbox](https://global.rokid.com/pages/faq)
