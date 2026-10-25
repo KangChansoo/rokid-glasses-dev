@@ -90,6 +90,7 @@ public final class MainActivity extends GlassesActivity {
     }
 
     private void choosePdf() {
+        trace("picker_open");
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/pdf");
@@ -103,6 +104,7 @@ public final class MainActivity extends GlassesActivity {
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == PICK_PDF) trace("picker_result accepted=" + (result == RESULT_OK));
         if (request == PICK_PDF && result == RESULT_OK && data != null && data.getData() != null) {
             Uri uri = data.getData();
             importPdf(() -> getContentResolver().openInputStream(uri));
@@ -115,6 +117,7 @@ public final class MainActivity extends GlassesActivity {
             say("앱 전용 문서 폴더를 열 수 없습니다."); return;
         }
         File[] files = folder.listFiles(file -> file.isFile() && file.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".pdf"));
+        trace("app_folder count=" + (files == null ? 0 : files.length));
         if (files == null || files.length == 0) {
             new AlertDialog.Builder(this).setTitle("앱 전용 PDF 폴더")
                 .setMessage("도구 상자의 파일 업로드에서 이 폴더를 선택할 수 있으면 PDF를 넣어 주세요.\n\n" + folder.getAbsolutePath() + "\n\n앱 밖의 폴더를 직접 검색하지 않습니다.")
@@ -162,6 +165,7 @@ public final class MainActivity extends GlassesActivity {
                 getPreferences(0).edit().putInt("page", 0).apply();
                 ui(token, () -> ready(pages, 0, false));
             } catch (IOException | RuntimeException exception) {
+                trace("document_error type=" + exception.getClass().getSimpleName());
                 ui(token, () -> { loaded = false; updateControls(); say("PDF를 열지 못했습니다. 파일 접근·암호·손상 여부와 200MB 제한을 확인하세요."); });
             } finally {
                 if (candidate != null) candidate.close();
@@ -184,7 +188,9 @@ public final class MainActivity extends GlassesActivity {
                 closeRenderer(); renderer = candidate;
                 int pages = renderer.getPageCount();
                 ui(token, () -> ready(pages, savedPage, false));
-            } catch (IOException | RuntimeException exception) { ui(token, () -> say("저장된 PDF를 열 수 없습니다. PDF 열기로 다시 선택하세요.")); }
+            } catch (IOException | RuntimeException exception) {
+                trace("document_error type=" + exception.getClass().getSimpleName());
+                ui(token, () -> say("저장된 PDF를 열 수 없습니다. PDF 열기로 다시 선택하세요.")); }
         });
     }
     private void openDemo() {
@@ -215,12 +221,15 @@ public final class MainActivity extends GlassesActivity {
                 PdfRenderer candidate = openRenderer(file);
                 closeRenderer(); renderer = candidate;
                 ui(token, () -> ready(3, 0, true));
-            } catch (IOException | RuntimeException exception) { ui(token, () -> say("데모 PDF 생성에 실패했습니다.")); }
+            } catch (IOException | RuntimeException exception) {
+                trace("document_error type=" + exception.getClass().getSimpleName());
+                ui(token, () -> say("데모 PDF 생성에 실패했습니다.")); }
         });
     }
     private void ready(int count, int page, boolean demo) {
         pageCount = count; pageIndex = ReaderMath.clampPage(page, count);
         zoomIndex = 0; isDemo = demo; loaded = true;
+        trace("document_ready pages=" + count + " page=" + (pageIndex + 1) + " demo=" + demo);
         empty.setVisibility(View.GONE);
         updateControls(); pageView.post(() -> render(true));
     }
@@ -229,12 +238,14 @@ public final class MainActivity extends GlassesActivity {
         int page = ReaderMath.clampPage(pageIndex + delta, pageCount);
         if (page == pageIndex) return;
         pageIndex = page;
+        trace("page=" + (pageIndex + 1) + "/" + pageCount);
         if (!isDemo) getPreferences(0).edit().putInt("page", pageIndex).apply();
         updateControls(); render(true);
     }
     private void toggleZoom() {
         if (!loaded) return;
         zoomIndex = (zoomIndex + 1) % ZOOMS.length;
+        trace("zoom=" + ZOOMS[zoomIndex]);
         updateControls(); render(true);
     }
     private void updateControls() {
@@ -261,9 +272,11 @@ public final class MainActivity extends GlassesActivity {
                 runOnUiThread(() -> {
                     if (!current(document) || sequence != renderToken) { result.recycle(); return; }
                     pageView.display(result, zoom, resetPan);
+                    trace("render page=" + (index + 1) + " bitmap=" + result.getWidth() + "x" + result.getHeight() + " zoom=" + zoom);
                     say((isDemo ? "DEMO · " : "PDF · ") + (index + 1) + " / " + pageCount + " · 확대 후 드래그/휠");
                 });
             } catch (RuntimeException | OutOfMemoryError exception) {
+                trace("render_error type=" + exception.getClass().getSimpleName());
                 ui(document, () -> { if (sequence == renderToken) say("이 페이지를 표시하지 못했습니다. 다른 페이지나 작은 배율을 선택하세요."); });
             } finally { if (bitmap != null) bitmap.recycle(); }
         });
@@ -276,6 +289,7 @@ public final class MainActivity extends GlassesActivity {
             .setNegativeButton("취소", null).show();
     }
     private void clearDocument() {
+        trace("document_clear");
         int token = ++documentToken; renderToken++; loaded = false; pageIndex = 0;
         updateControls(); pageView.display(null, 1, true); empty.setVisibility(View.VISIBLE);
         getPreferences(0).edit().clear().apply();

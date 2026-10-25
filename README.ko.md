@@ -52,7 +52,6 @@ apps/
 shared/android-ui/      공통 녹색 화면과 Android 버튼
 gradle/                 Gradle wrapper; 빌드 설정은 저장소 루트
 tools/emulator.py       Python Android 개발 패널·CLI
-tests/                  PC 도구 검사
 scripts/
   build.ps1              앱 하나 또는 전체 빌드, artifacts.json 갱신
   check.py               문서 링크·JSON·XML 검사

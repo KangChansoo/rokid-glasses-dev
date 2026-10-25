@@ -14,7 +14,7 @@ python tools/emulator.py
 - **Below the screen:** app selection, Build & run, Run APK, Send file, and the permanent direction/Enter/Back buttons.
 - **Right side:** Lab and App log tabs. The divider can be dragged to resize the log area.
 - **Lab:** operation output plus Check, Setup and Display settings.
-- **App log:** recent logs for the selected app, Refresh and Auto. Auto refresh runs while the tab is visible and the virtual emulator is attached. It shows a bounded recent snapshot, not an unlimited archive. A stopped/crashed app may need separate debugger inspection.
+- **App log:** recent logs for the selected app, Refresh and Auto. Auto refresh runs while the tab is visible and the virtual emulator is attached. It shows a bounded recent snapshot, not an unlimited archive. It filters debug `RokidApp` events and `AndroidRuntime` errors for that process. Button/navigation input, page/zoom/render state and lifecycle events are recorded. It retains the last process snapshot after exit during the same Lab session; Android log buffers may eventually discard it. Install the current debug APK to obtain these events. A full crash investigation may still need a debugger.
 
 Use the mouse/trackpad directly in the embedded screen for pointer movement, click/double-click and horizontal/vertical scrolling, or use the buttons below it. There is no Input mode selector. When testing a buttons-only workflow, use directions to move focus before Enter. Tab/Page shortcuts remain CLI-only development aids and are not required app controls.
 
@@ -26,7 +26,7 @@ Stop closes only the owned VM. Closing the panel waits for its current operation
 
 ## Local display settings
 
-The initial display is **provisional 480 × 640, 160 dpi, font scale 1.0**. It is not a measurement read from glasses.
+The initial display is **photo-estimated 480 × 640, 240 dpi, font scale 1.0**. It is not a measurement read from glasses. The supplied photos suggest approximately 1.5× larger dp/sp controls than the former 160 dpi profile. At 240 dpi a 38 dp button row becomes 57 px rather than 38 px; its physical field of view and firmware are still not simulated. Existing manual settings are preserved. To update an old 160 dpi profile, stop the VM and apply 240 in Display…; APK rebuilding alone does not change virtual density.
 
 Stop the VM, open **Lab → Display…**, enter width/height/density/font scale, and choose Apply locally. Start again to apply. API remains 32. These values are stored only in ignored `.emulator/display.local.json`. Existing local numeric display values from an older version are preserved as manual settings; no device is contacted to migrate them.
 
@@ -49,7 +49,7 @@ Use Windows, Python 3.10+ with Tk, Java 17 and the SDK configuration in [develop
 ```powershell
 python tools/emulator.py doctor
 python tools/emulator.py setup
-python tools/emulator.py display --width 480 --height 640 --density 160
+python tools/emulator.py display --width 480 --height 640 --density 240
 python tools/emulator.py start
 python tools/emulator.py run paper-viewer --build
 python tools/emulator.py file "C:/MyFiles/example.txt"
@@ -57,6 +57,8 @@ python tools/emulator.py logs paper-viewer
 python tools/emulator.py stop
 ```
 
-CLI-only start runs the SDK independently; open the default GUI for the integrated view. `start --headless` supports automated virtual validation. All device operations reject physical transports and verify the online qemu instance and owned AVD name. Source checks are `python -m unittest discover -s tests -v` and `python scripts/check.py`. See [validation](VALIDATION.md) for local evidence. Current work is local for review; no push is implied.
+CLI-only start runs the SDK independently; open the default GUI for the integrated view. `start --headless` supports automated virtual validation. All device operations reject physical transports and verify the online qemu instance and owned AVD name. Run `python scripts/check.py` and check Python syntax; verify changes in the owned VM. The separate Python emulator test file was removed at the user’s request. Android app checks remain in the Gradle build. See [validation](VALIDATION.md) for local evidence. Current work is local for review; no push is implied.
 
 Official references: [Android Emulator](https://developer.android.com/studio/run/emulator-commandline), [ADB command options](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md), [wireless auto-connect configuration](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/android16-s2-release/adb_mdns.cpp), [Windows native hosting](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setparent).
+
+Debug events omit document contents, filenames/URIs and typed characters. They are local diagnostics, not performance measurements. Do not publish raw logs; Android runtime error output can contain sensitive data.

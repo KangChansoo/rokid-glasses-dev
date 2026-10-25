@@ -52,7 +52,6 @@ apps/
 shared/android-ui/      Shared green-on-black Android UI
 gradle/                 Gradle wrapper; build settings live at the root
 tools/emulator.py       Python Android lab panel and CLI
-tests/                  PC tooling checks
 scripts/
   build.ps1              Build one app or all apps; update artifacts.json
   check.py               Markdown links, JSON and XML checks

@@ -15,3 +15,5 @@ There is no API connection yet. Future integration must not place OpenAI keys in
 Do not commit APKs or SDK/JDK/Gradle distributions. The verified official Gradle wrapper JAR is the development bootstrap exception. Keep debug/release signing keys in local tooling and use the same signing identity for updates.
 
 Public visual examples must use synthetic documents. Do not publish the user's real-paper screenshots or surrounding personal/device information.
+
+Debug APKs emit local `RokidApp` diagnostics for lifecycle, navigation, fixed button labels and numeric PDF state. These events exclude document contents, filenames/URIs and typed characters; release builds do not emit them. Android runtime errors may still contain sensitive data, so keep raw App log output and screenshots private.

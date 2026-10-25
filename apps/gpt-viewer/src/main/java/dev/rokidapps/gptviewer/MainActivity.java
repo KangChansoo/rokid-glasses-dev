@@ -31,7 +31,7 @@ public final class MainActivity extends GlassesActivity {
         show(); next.requestFocus();
     }
     private void move(int delta) { page = Math.max(0, Math.min(PAGES.length - 1, page + delta)); taps++; show(); }
-    private void show() { answer.setText(PAGES[page]); say((page + 1) + " / " + PAGES.length + " · 클릭 " + taps); }
+    private void show() { trace("page=" + (page + 1) + "/" + PAGES.length + " actions=" + taps); answer.setText(PAGES[page]); say((page + 1) + " / " + PAGES.length + " · 클릭 " + taps); }
     @Override public boolean onKeyUp(int code, KeyEvent event) {
         if (code == KeyEvent.KEYCODE_PAGE_DOWN) { move(1); return true; }
         if (code == KeyEvent.KEYCODE_PAGE_UP) { move(-1); return true; }

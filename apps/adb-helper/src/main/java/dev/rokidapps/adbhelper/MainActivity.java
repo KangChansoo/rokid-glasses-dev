@@ -44,11 +44,14 @@ public final class MainActivity extends GlassesActivity {
 
     private void open(String action, int label) {
         try {
+            trace("settings_open action=" + action);
             startActivity(new Intent(action));
             lastRequest = getString(R.string.dispatched, getString(label));
         } catch (ActivityNotFoundException unavailable) {
+            trace("settings_unavailable");
             lastRequest = getString(R.string.missing, getString(label));
         } catch (SecurityException denied) {
+            trace("settings_denied");
             lastRequest = getString(R.string.denied, getString(label));
         }
         refresh();
@@ -56,6 +59,7 @@ public final class MainActivity extends GlassesActivity {
 
     private void refresh() {
         if (details == null) return;
+        trace("refresh");
         String summary = getString(R.string.summary, Build.MODEL, Build.VERSION.RELEASE,
                 Build.VERSION.SDK_INT);
         details.setText(getString(R.string.body, summary, lastRequest, getString(R.string.guide)));

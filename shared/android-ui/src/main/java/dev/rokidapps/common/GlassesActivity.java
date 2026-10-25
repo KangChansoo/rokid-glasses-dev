@@ -1,6 +1,12 @@
 package dev.rokidapps.common;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
@@ -9,6 +15,8 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.WindowInsets;
+import android.view.WindowInsetsController;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -23,7 +31,11 @@ public abstract class GlassesActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        DisplayMetrics metrics = getResources().getDisplayMetrics();
+        trace("create display=" + metrics.widthPixels + "x" + metrics.heightPixels
+                + " dpi=" + metrics.densityDpi + " fontScale=" + getResources().getConfiguration().fontScale);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON | WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().setDecorFitsSystemWindows(false);
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION |
                 View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
@@ -41,6 +53,16 @@ public abstract class GlassesActivity extends Activity {
         status = text(12); status.setMaxLines(2);
         shell.addView(status, new LinearLayout.LayoutParams(-1, dp(36)));
         setContentView(shell);
+    }
+    @Override public void onWindowFocusChanged(boolean focused) {
+        super.onWindowFocusChanged(focused);
+        if (focused) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.setSystemBarsBehavior(WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+                controller.hide(WindowInsets.Type.systemBars());
+            }
+        }
     }
     protected int dp(float value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     protected TextView text(int size) {
@@ -70,13 +92,43 @@ public abstract class GlassesActivity extends Activity {
         button.setBackground(background);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, -1, 1);
         params.setMargins(dp(2), 0, dp(2), 0); row.addView(button, params);
-        button.setOnClickListener(view -> action.run());
+        button.setOnClickListener(view -> {
+            trace("button=" + label);
+            action.run();
+        });
         return button;
     }
     private GradientDrawable border(int fill) {
         GradientDrawable shape = new GradientDrawable();
         shape.setColor(fill); shape.setCornerRadius(dp(3)); shape.setStroke(dp(1), GREEN);
         return shape;
+    }
+    // Fixed event names and numeric state only. Never pass document text, URIs or filenames.
+    public static void trace(Context context, String event) {
+        if ((context.getApplicationInfo().flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0) {
+            Log.i("RokidApp", context.getPackageName() + " " + event);
+        }
+    }
+    protected void trace(String event) { trace(this, event); }
+    @Override protected void onResume() { super.onResume(); trace("resume"); }
+    @Override protected void onPause() { trace("pause"); super.onPause(); }
+    @Override protected void onDestroy() { trace("destroy"); super.onDestroy(); }
+    @Override public boolean dispatchKeyEvent(KeyEvent event) {
+        int key = event.getKeyCode();
+        if (event.getRepeatCount() == 0 && (key == KeyEvent.KEYCODE_BACK
+                || key == KeyEvent.KEYCODE_ENTER || key == KeyEvent.KEYCODE_DPAD_CENTER
+                || (key >= KeyEvent.KEYCODE_DPAD_UP && key <= KeyEvent.KEYCODE_DPAD_RIGHT)
+                || key == KeyEvent.KEYCODE_TAB || key == KeyEvent.KEYCODE_PAGE_UP
+                || key == KeyEvent.KEYCODE_PAGE_DOWN)) {
+            trace("key=" + KeyEvent.keyCodeToString(key) + " " + (event.getAction() == KeyEvent.ACTION_DOWN ? "down" : "up"));
+        }
+        return super.dispatchKeyEvent(event);
+    }
+    @Override public boolean dispatchTouchEvent(MotionEvent event) {
+        if (event.getActionMasked() == MotionEvent.ACTION_UP) {
+            trace("pointer_up x=" + Math.round(event.getX()) + " y=" + Math.round(event.getY()));
+        }
+        return super.dispatchTouchEvent(event);
     }
     protected void say(String message) { status.setText(message); }
 }

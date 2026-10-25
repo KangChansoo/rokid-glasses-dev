@@ -68,6 +68,18 @@ The current Lab removes physical-device capture completely. Width, height, densi
 
 Twenty Python tests passed. The VM booted on the private channel and the sample GPT APK launched; its selected-process log was read successfully. On Windows the right-side Lab/App log tabs, populated App log view, Start/Stop above the screen, permanent navigation buttons and absence of an Input mode selector were inspected. Native positioning was corrected after SDK startup and unnecessary upscaling was avoided to prevent clipping at the tested profile. No hardware endpoint was used and no Android app source changed. This remains local uncommitted work; no merge or push was performed.
 
+## Photo-based display correction and app events (2026-10-25)
+
+The current default is 480 × 640, 240 dpi and font scale 1.0, labelled `photo-estimate`. The user's comparison photos suggest dp/sp controls approximately 1.5 times larger than the former 160 dpi profile. This is an estimate from images, not hardware display telemetry or proof of optical/firmware fidelity. Existing manual profiles are preserved.
+
+In the owned API 32 VM, a Helper button row measured 57 px (38 dp at 240 dpi). A 36 px system-bar inset was also found and removed by explicitly applying fullscreen/insets on window focus. The Helper title and body start higher while the app's existing dp/sp sizes remain unchanged. All three apps share this fullscreen correction.
+
+All three debug APKs passed assemble/lint, and the four existing Paper Viewer JVM calculations passed. APK inventory checks confirmed package/version, launcher, permissions, backup policy, signatures and zip alignment. Helper is now 0.1.1; GPT/Paper are 0.2.1, all version code 2. The separate Python emulator test file and CI invocation were removed at the user's request; the earlier Python test counts above are historical. Python syntax and 33 metadata/link files passed checks.
+
+Runtime checks verified Helper refresh events, GPT directional focus followed by one Enter producing one page action, Back, and a retained log snapshot after stopping the process in the same Lab session. Synthetic Paper Viewer demo checks covered pointer clicks, next page, zoom, drag and render events. The existing private PDF hash remained unchanged. App log now filters debug app events/runtime errors, removes repeated process columns and wraps long lines. Events omit document text, paths/URIs, filenames and typed characters. Runtime error output remains private.
+
+These are local VM checks. No actual glasses connection, uninstall, data reset, commit, merge or push was performed for this change. VM data and generated screenshots/logs remain ignored.
+
 ## Still pending
 
 GPT Viewer device display/input; complete PDF picker/provider and original-access behavior; panning/zoom/navigation/resume; fonts/long documents; per-app temple/watch/phone control; controlled power/memory/latency measurements. There is no live API, phone companion, camera AI or C/NDK processing yet.

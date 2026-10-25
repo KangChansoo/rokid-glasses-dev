@@ -9,10 +9,12 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.view.MotionEvent;
 import android.view.View;
+import dev.rokidapps.common.GlassesActivity;
 
 /** White becomes black; dark PDF ink becomes green. Zoomed pages support mouse drag/wheel. */
 public final class PdfCanvas extends View {
     private Bitmap bitmap;
+    private long lastScrollLog;
     private float zoom = 1, panX, panY, lastX, lastY;
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
     private final RectF destination = new RectF();
@@ -49,7 +51,9 @@ public final class PdfCanvas extends View {
             case MotionEvent.ACTION_MOVE:
                 panX += event.getX() - lastX; panY += event.getY() - lastY;
                 lastX = event.getX(); lastY = event.getY(); invalidate(); return true;
-            case MotionEvent.ACTION_UP: performClick(); return true;
+            case MotionEvent.ACTION_UP:
+                GlassesActivity.trace(getContext(), "pdf_pan x=" + Math.round(panX) + " y=" + Math.round(panY));
+                performClick(); return true;
             case MotionEvent.ACTION_CANCEL: return true;
             default: return super.onTouchEvent(event);
         }
@@ -58,6 +62,11 @@ public final class PdfCanvas extends View {
         if (event.getAction() == MotionEvent.ACTION_SCROLL && bitmap != null) {
             panY += event.getAxisValue(MotionEvent.AXIS_VSCROLL) * 45;
             panX += event.getAxisValue(MotionEvent.AXIS_HSCROLL) * 45;
+            if (event.getEventTime() - lastScrollLog >= 200) {
+                GlassesActivity.trace(getContext(), "pdf_scroll horizontal=" + event.getAxisValue(MotionEvent.AXIS_HSCROLL)
+                        + " vertical=" + event.getAxisValue(MotionEvent.AXIS_VSCROLL));
+                lastScrollLog = event.getEventTime();
+            }
             invalidate(); return true;
         }
         return super.onGenericMotionEvent(event);

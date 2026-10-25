@@ -12,3 +12,5 @@ The user's active development path is ordinary Android APKs installed through Hi
 
 - User-confirmed input modes are separate: Touchpad (pointer, click/double-click, two-finger horizontal/vertical scroll) and Buttons (four directions, Enter, Back). Design and validate essential flows in each mode independently. Do not require PC-only Tab/Page keys, assume button-mode PDF panning is already implemented, or invent double-click/temple gesture commands.
 - The normal device workflow is APK transfer/installation through Hi Rokid or AnExplorer. Physical-device installation/testing is separate. The PC Lab is strictly virtual-only and never communicates with real glasses/phones.
+
+- Debug-only RokidApp traces may record fixed action names and numeric state. Never log document contents, filenames, paths/URIs, entered text, account identifiers or exception messages. Keep Android runtime error logs private.

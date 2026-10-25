@@ -24,7 +24,7 @@ APPS = {name: f'dev.rokidapps.{package}' for name, package in (
     ('paper-viewer', 'paperviewer'), ('gpt-viewer', 'gptviewer'), ('adb-helper', 'adbhelper'))}
 KEYS = {'back': '4', 'enter': '66', 'tab': '61', 'up': '19', 'down': '20',
         'left': '21', 'right': '22', 'page-up': '92', 'page-down': '93'}
-DEFAULT = dict(api=32, width=480, height=640, density=160, fontScale=1.0, source='provisional')
+DEFAULT = dict(api=32, width=480, height=640, density=240, fontScale=1.0, source='photo-estimate')
 
 
 def display_profile(size: str, density: str, api: str, font: str) -> dict:
@@ -48,7 +48,7 @@ def validate_profile(profile: dict) -> dict:
     font = profile['fontScale']
     if not isinstance(font, (float, int)) or not math.isfinite(font) or not 0.5 <= font <= 3:
         raise ValueError('Invalid font scale.')
-    if profile['source'] not in ('provisional', 'manual'):
+    if profile['source'] not in ('provisional', 'photo-estimate', 'manual'):
         raise ValueError('Invalid profile source.')
     return {key: profile[key] for key in DEFAULT}
 
@@ -89,6 +89,7 @@ class Lab:
         self.env.update(ADB_SERVER_SOCKET=f'tcp:127.0.0.1:{ADB_PORT}',
                         ANDROID_ADB_SERVER_PORT=str(ADB_PORT), ADB_MDNS_AUTO_CONNECT='0')
         self._adb_lock = threading.Lock()
+        self._log_pids: dict[tuple[str, str], str] = {}
         self.env.update(ANDROID_HOME=str(self.sdk), ANDROID_AVD_HOME=str(self.state / 'avd'),
                         ANDROID_EMULATOR_HOME=str(self.state))
         java = config.get('javaHome') or os.environ.get('JAVA_HOME')
@@ -241,6 +242,7 @@ class Lab:
         result = self.adb_read(serial, 'shell', 'am', 'start', '-W', '-n', APPS[app] + '/.MainActivity')
         if 'Status: ok' not in result:
             raise RuntimeError('Android did not report a successful Activity launch.\n' + result)
+        self._remember_pid(serial, app)
         return result
 
     def key(self, key: str) -> str:
@@ -265,15 +267,45 @@ class Lab:
                 'Open it using a file manager or the app file picker > internal storage > Download.\n'
                 'The file was not opened or installed automatically.')
 
-    def logs(self, app: str) -> str:
-        serial = self.target()
+    def _remember_pid(self, serial: str, app: str) -> str | None:
         try:
             pid = self.adb_read(serial, 'shell', 'pidof', '-s', APPS[app])
-        except RuntimeError as error:
-            raise RuntimeError('The selected app is not running. Launch it to see its logs.') from error
-        if not re.fullmatch(r'\d+', pid):
-            raise RuntimeError('App is not running; launch it first.')
-        return self.adb_read(serial, 'logcat', '-d', '-t', '300', '--pid=' + pid) or 'No recent app logs.'
+        except RuntimeError:
+            return None
+        if re.fullmatch(r'\d+', pid):
+            self._log_pids[(serial, app)] = pid
+            return pid
+        return None
+
+    def logs(self, app: str) -> str:
+        serial = self.target()
+        running = self._remember_pid(serial, app)
+        pid = running or self._log_pids.get((serial, app))
+        if not pid:
+            return 'Launch the selected app in this Lab session to see its events.'
+        output = self.adb_read(serial, 'logcat', '-d', '-t', '300', '-v', 'threadtime',
+                               '--pid=' + pid, 'RokidApp:I', 'AndroidRuntime:E', '*:S')
+        lines = []
+        for line in output.splitlines():
+            entry = re.match(r'\d{2}-\d{2}\s+(\S+)\s+\d+\s+\d+\s+([A-Z])\s+(RokidApp|AndroidRuntime)\s*:\s?(.*)', line)
+            if not entry:
+                continue
+            timestamp, level, tag, message = entry.groups()
+            if tag == 'RokidApp':
+                # Also reject another package's events if a stopped process ID was reused.
+                prefix = APPS[app] + ' '
+                if not message.startswith(prefix):
+                    continue
+                message = message[len(prefix):]
+            else:
+                message = 'AndroidRuntime: ' + message
+            lines.append(f'{timestamp} {level}  {message}')
+        events = '\n'.join(lines)
+        state = 'running' if running else 'stopped; last process snapshot'
+        header = f'{app} | {state}\nDebug events + runtime errors\n\n'
+        return header + (events if events else
+                         'No recent events. Install the current debug APK, then interact with it.\n'
+                         'Older APKs and release builds do not contain these debug events.')
 
     def stop(self) -> str:
         return self.adb_read(self.target(), 'emu', 'kill')
@@ -489,9 +521,9 @@ def gui(lab: Lab):
     ttk.Label(log_header, textvariable=app_log_label).pack(side='left')
     auto_logs = tk.BooleanVar(value=True)
     ttk.Checkbutton(log_header, text='Auto', variable=auto_logs).pack(side='right')
-    log_status = tk.StringVar(value='Recent selected-app log (up to 300 entries).')
+    log_status = tk.StringVar(value='Debug events and runtime errors (latest 300).')
     ttk.Label(app_tab, textvariable=log_status, wraplength=330).grid(row=1, column=0, sticky='w', pady=(0, 4))
-    app_console, app_output = console(app_tab); app_console.grid(row=2, column=0, sticky='nsew')
+    app_console, app_output = console(app_tab); app_output.configure(wrap='word'); app_console.grid(row=2, column=0, sticky='nsew')
     jobs = queue.Queue()
     controls = []
     busy = closing = close_requested = embedding_requested = False
@@ -644,7 +676,7 @@ def gui(lab: Lab):
                         app_output.yview_moveto(position[0])
                     app_output.xview_moveto(horizontal_position)
                     last_log_payload = item
-                log_status.set('Recent selected-app log (up to 300 entries).' if ok else 'App log unavailable')
+                log_status.set('Debug events and runtime errors (latest 300).' if ok else 'App log unavailable')
         if (auto_logs.get() and notebook.select() == str(app_tab) and host.attached()
                 and not busy and not closing and time.monotonic() >= next_log_time):
             request_logs()
