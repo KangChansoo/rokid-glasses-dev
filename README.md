@@ -40,6 +40,8 @@ Current apps use **Java and standard Android APIs**. There is no C/NDK processin
 4. Use the glasses' current pairing/connection endpoints in the [ADB guide](docs/ADB.md).
 5. Follow [app usage](docs/APPS.md) and [PDF transfer](docs/FILE_TRANSFER.md) to test a document you own. No special folder is required when opening through a file manager.
 
+**Branches:** develop on `feature/<name>` from `dev`, integrate into `dev`, then promote to `main` for releases. See the [branch workflow](docs/DEVELOPMENT.md#branch-workflow).
+
 ## Repository
 
 ```text

@@ -40,6 +40,8 @@ Viewer 시제품은 있으며 미완료 표시는 지속적인 개발 과제를 
 4. [ADB 가이드](docs/ADB.ko.md)에 따라 현재 안경 화면의 페어링·연결 주소로 접속합니다.
 5. [앱 설명](docs/APPS.ko.md)과 [PDF 전송](docs/FILE_TRANSFER.ko.md)에 따라 본인 문서를 시험합니다. 파일 관리자로 열 때 특정 폴더는 필수가 아닙니다.
 
+**브랜치:** `dev`에서 `feature/<name>`을 만들어 작업하고 `dev`로 통합한 뒤, 릴리즈할 때 `main`으로 반영합니다. [브랜치 운영](docs/DEVELOPMENT.ko.md#브랜치-운영)을 참고하세요.
+
 ## 저장소 구성
 
 ```text

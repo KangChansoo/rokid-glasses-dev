@@ -15,3 +15,11 @@ Develop standalone Android APKs under apps/. Use Hi Rokid Toolbox for the first 
 
 - Apps are independent modules in apps/; shared Android UI is shared/android-ui/. The apps/AGENTS.md safety/resource rules also apply to that shared module. Gradle settings/wrapper are at the repository root; generated output is root build/.
 - dist/ is a flat, Git-ignored APK folder. scripts/build.ps1 creates its single artifacts.json with hashes, package metadata and validation. Mark external APKs as external; do not bundle or re-sign them.
+
+## Branch workflow
+
+- `main` is the release branch; `dev` integrates development work.
+- Start every new app, feature, fix or documentation change from up-to-date `dev` on a `feature/<name>` branch. Use the app name or a short task name, for example `feature/paper-viewer` or `feature/paper-viewer-navigation`.
+- Commit work on the feature branch, run the relevant checks, then merge it into `dev`. Never work directly on `main`; keep development commits off `dev` until they are integrated from a feature branch.
+- Promote tested `dev` to `main` only for a user-authorized release. Ordinary development requests do not authorize a release merge. Preserve history; do not reset or force-push shared branches.
+- After integrating a finished feature, leave the local checkout on `dev`. Create the next feature branch before editing again. Keep English and Korean workflow documentation aligned.
