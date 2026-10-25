@@ -73,19 +73,24 @@ adb-EXAMPLE._adb-tls-connect._tcp          device
 
 ```powershell
 # 두 transport가 있어도 대상을 명확히 지정
-./scripts/adb-info.ps1 -Serial $deviceEndpoint
+adb -s $deviceEndpoint shell getprop ro.product.model
 adb -s $deviceEndpoint install -r ./dist/gpt-viewer-android-debug.apk
 ```
 
 수동 연결만 정리하려면 `adb disconnect $deviceEndpoint`를 실행하고 목록을 다시 봅니다. mDNS 항목이 남아 있으면 그것을 `-s`로 사용할 수 있습니다. 자동 재연결 때문에 목록이 바뀔 수 있으므로 한 줄로 만드는 것보다 대상 지정이 확실합니다. 이 안내는 연결을 강제로 끊거나 PC의 전역 mDNS 설정을 바꾸지 않습니다.
 
-## 6. 읽기 전용 확인 도구
+## 6. 표준 명령으로 기기 정보 읽기
+
+별도 정보 확인 스크립트 대신 대상을 지정한 표준 ADB 명령을 사용합니다.
 
 ```powershell
-./scripts/adb-info.ps1 -Serial $deviceEndpoint
+adb -s $deviceEndpoint shell getprop ro.product.model
+adb -s $deviceEndpoint shell getprop ro.product.manufacturer
+adb -s $deviceEndpoint shell getprop ro.build.version.release
+adb -s $deviceEndpoint shell getprop ro.build.version.sdk
 ```
 
-모델·제조사·Android 버전/API만 읽습니다. Serial 매개변수에는 실제 하드웨어 일련번호를 알아낼 필요 없이 `adb devices`의 첫 열을 사용합니다. 여러 항목이 있는데 대상을 생략하면 중단합니다. 앱 설치·파일 전송·설정 변경·ADB 서버 재시작은 하지 않습니다. 연결 이름은 화면에만 표시하며 로그 파일을 만들지 않습니다.
+모델·버전만 읽으며 앱 설치·파일 전송·설정 변경은 하지 않습니다. 대상은 adb devices의 첫 열이며 하드웨어 일련번호일 필요는 없습니다.
 
 ## 7. 종료·다시 연결
 

@@ -14,10 +14,10 @@
 Java 17과 Android SDK Platform 36 / Build Tools 36.0.0을 설치하고 저장소 루트에서 실행합니다. Node.js/npm이나 승인 SDK는 필요하지 않습니다.
 
 ```powershell
-./scripts/build-native.ps1 -JavaHome 'C:/Tools/jdk17' -SdkRoot 'C:/Tools/AndroidSdk'
+./scripts/build.ps1 -JavaHome 'C:/Tools/jdk17' -SdkRoot 'C:/Tools/AndroidSdk'
 ```
 
-반복 실행은 Git 제외 파일 `native/toolchain.local.json`에 본인 경로를 넣어 사용할 수 있습니다.
+반복 실행은 Git 제외 파일 `toolchain.local.json`에 본인 경로를 넣어 사용할 수 있습니다.
 
 ```json
 {
@@ -26,7 +26,7 @@ Java 17과 Android SDK Platform 36 / Build Tools 36.0.0을 설치하고 저장�
 }
 ```
 
-설정 후 `./scripts/build-native.ps1`만 실행합니다. 스크립트는 현재 프로세스에서만 환경 변수를 적용하고 되돌립니다. 다른 프로젝트의 전역 Java/계정 설정을 바꾸지 않습니다. APK 세 개와 체크섬은 Git 제외 `dist/`에 생성됩니다.
+설정 후 `./scripts/build.ps1`만 실행합니다. 스크립트는 현재 프로세스에서만 환경 변수를 적용하고 되돌립니다. 다른 프로젝트의 전역 Java/계정 설정을 바꾸지 않습니다. APK는 Git 제외 `dist/`에 생성되며 메타데이터는 `artifacts.json` 하나로 갱신합니다.
 
 Python 3.10 이상에서 `python scripts/check.py`로 문서 상대 링크, JSON, XML을 검사합니다. Android 빌드는 세 앱 assembleDebug/lintDebug와 Paper Viewer의 JVM 단위 테스트를 포함합니다.
 
@@ -34,6 +34,24 @@ Python 3.10 이상에서 `python scripts/check.py`로 문서 상대 링크, JSON
 
 공식 환경: [AGP 8.13](https://developer.android.com/build/releases/agp-8-13-0-release-notes), [Platform Tools](https://developer.android.com/tools/releases/platform-tools), [NDK](https://developer.android.com/ndk/guides).
 
+
+
+## 앱별 구조
+
+독립 앱은 `apps/adb-helper`, `apps/gpt-viewer`, `apps/paper-viewer`에 나뉘고 공통 UI는 `shared/android-ui` 라이브러리에 둡니다. Gradle 설정·wrapper·개인 toolchain.local.json은 저장소 루트에 있습니다. 루트를 Android/Gradle 프로젝트로 엽니다.
+
+생성 결과는 `build/<module>/`에 모아 앱 폴더에는 원본과 모듈 설정만 남깁니다. src/main/java, src/main/res, src/test는 Android의 표준 모듈 구조입니다.
+
+```powershell
+# 앱 하나 빌드·lint. Paper Viewer는 단위 테스트도 실행합니다.
+./scripts/build.ps1 -App paper-viewer
+# 세 앱 전체 빌드·검사.
+./scripts/build.ps1
+```
+
+dist는 하위 폴더 없이 프로젝트 APK와 선택적인 외부 APK, artifacts.json 하나를 둡니다. JSON은 파일명·출처 구분·패키지/버전·SDK·크기·SHA-256·권한·서명/정렬 검사 결과를 담습니다. 우리 APK는 기존 패키지 ID·권한 0개·백업 제외를 확인합니다. 외부 앱은 별도 권한을 가지며 external로 표시합니다. 서명 검사는 유효성을 확인하며 제공자 신원·신뢰를 보증하지는 않습니다.
+
+AnExplorer APK는 선택 사항이고 빌드에서 다운로드하거나 Git에 넣지 않습니다. JSON은 dist에 실제 있는 APK를 반영합니다. 앱 하나를 빌드하면 해당 APK만 갱신하고 기존 파일들도 목록에 포함하며 다른 앱을 재빌드하지 않습니다.
 
 ## 문서 언어
 

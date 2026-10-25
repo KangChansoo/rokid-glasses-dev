@@ -20,7 +20,7 @@
 
 새 저장소 빌드에서 Gradle task 179개를 실행했습니다. 앱별 lint 오류는 0개이며 GPT/Paper Viewer 각 경고 3개, Helper 2개입니다. 세로 화면 가정 및 Viewer 시제품의 문자열 리소스 미분리 경고입니다. Python 문서/JSON/XML 검사는 최초 20개 파일을 확인했고 이후 문서 추가는 APK를 변경하지 않습니다.
 
-ADB 읽기 도구는 지정 대상의 모델/API를 읽고, 두 transport가 있는데 대상을 생략하면 중단함을 확인했습니다. GitHub Actions는 구성했으며 로컬 검사와 CI 서버 결과는 구분합니다.
+이전 ADB 읽기 스크립트는 지정 대상의 모델/API를 읽고, 두 transport가 있는데 대상을 생략하면 중단함을 확인했습니다. GitHub Actions는 구성했으며 로컬 검사와 CI 서버 결과는 구분합니다.
 
 | APK | 바이트 | SHA-256 |
 |---|---:|---|
@@ -28,7 +28,15 @@ ADB 읽기 도구는 지정 대상의 모델/API를 읽고, 두 transport가 있
 | `paper-viewer-android-debug.apk` | 51344 | `3a13889d6872e5b36f3632ec84e3d5ffd44d569cc70d0724da158cd3c40e5712` |
 | `adb-helper-android-debug.apk` | 23732 | `884084ba34c3d5cc47113b4d867fe74219d2ff4b0cfbd8d824a89ee206d70a37` |
 
-위 해시는 해당 빌드의 기록입니다. 이후 빌드의 값은 Git 제외 dist/android-apk-checksums.json에서 확인합니다.
+위 해시는 해당 빌드의 기록입니다. 이후 빌드의 값은 Git 제외 dist/artifacts.json에서 확인합니다.
+
+## 저장소 구조 검증
+
+앱 모듈을 `apps/`, 공통 UI를 `shared/android-ui/`로 나누고 Gradle wrapper·설정을 루트에 뒀습니다. 생성 파일은 `build/<module>/`을 사용합니다. Java/XML 원본 16개는 이전 구조와 바이트 단위로 같으며, 프로젝트 APK 세 개의 해시도 위 표와 같습니다.
+
+루트에서 세 앱의 assembleDebug·lintDebug와 Paper Viewer JVM 테스트 4개가 통과했습니다. 현재 lint는 앱마다 오류 0개·경고 3개이며, 선택한 Gradle 버전·화면 방향 가정·시제품 문자열 관련 경고입니다. 이전 구조를 제거한 뒤 `./scripts/build.ps1 -App paper-viewer` 단독 빌드도 통과했습니다. 빌드 검사이며 안경 사용성을 다시 시험한 것은 아닙니다.
+
+`dist/`는 하위 폴더 없이 APK와 `artifacts.json` 하나를 둡니다. 빌드에서 해시·패키지/SDK·권한·백업 제외·서명·정렬을 확인합니다. 기존 AnExplorer APK는 변경 없이 `external`로 표시하며, 외부 앱의 권한은 권한 0개인 프로젝트 앱과 구분합니다. `adb-info.ps1`은 제거했고 [ADB 가이드](ADB.ko.md)에 대상을 지정하는 표준 명령을 남겼습니다.
 
 ## 남은 검증
 

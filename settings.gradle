@@ -1,0 +1,12 @@
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories { google(); mavenCentral() }
+}
+rootProject.name = 'RokidGlassesDev'
+
+include ':adb-helper', ':gpt-viewer', ':paper-viewer', ':android-ui'
+project(':adb-helper').projectDir = file('apps/adb-helper')
+project(':gpt-viewer').projectDir = file('apps/gpt-viewer')
+project(':paper-viewer').projectDir = file('apps/paper-viewer')
+project(':android-ui').projectDir = file('shared/android-ui')

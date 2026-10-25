@@ -34,7 +34,7 @@ Current apps use **Java and standard Android APIs**. There is no C/NDK processin
 
 ## Get started
 
-1. Follow [development setup](docs/DEVELOPMENT.md) and run `./scripts/build-native.ps1`.
+1. Follow [development setup](docs/DEVELOPMENT.md) and run `./scripts/build.ps1`.
 2. Copy `dist/adb-helper-android-debug.apk` to your phone and install it **on the glasses** through **Hi Rokid → Home → Toolbox → Glasses App Management**. Labels may vary by app language/version.
 3. In Helper, open **기기 정보 (Device info) → Build number**, tap it seven times, return to **개발자 옵션 (Developer options)**, then enable Wireless debugging.
 4. Use the glasses' current pairing/connection endpoints in the [ADB guide](docs/ADB.md).
@@ -43,17 +43,19 @@ Current apps use **Java and standard Android APIs**. There is no C/NDK processin
 ## Repository
 
 ```text
-native/
+apps/
   adb-helper/            Android settings launcher
   gpt-viewer/            Hello World / sample-response viewer
   paper-viewer/          Local PDF page viewer
-  common/                Shared green-on-black Android UI
+shared/android-ui/      Shared green-on-black Android UI
+gradle/                 Gradle wrapper; build settings live at the root
 scripts/
-  build-native.ps1       Build, lint, unit tests and APK checksums
-  adb-info.ps1           Read model/version from an explicit ADB target
+  build.ps1              Build one app or all apps; update artifacts.json
   check.py               Markdown links, JSON and XML checks
 docs/                    English and Korean guides
 measurements/            Empty battery and input measurement templates
+build/                   Generated files, grouped by module (Git-ignored)
+dist/                    Flat APK folder + artifacts.json (Git-ignored)
 ```
 
 APK output, real papers, extracted text, device identifiers, private screenshots, ADB keys, API keys and signing keys are excluded from Git. PDF files are not bundled. The current viewer creates one private PDF copy; opening originals directly is a planned improvement, not an implemented feature. See [security](SECURITY.md).

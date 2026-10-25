@@ -21,12 +21,12 @@ jobs:
           java-version: '17'
           cache: gradle
       - run: sdkmanager 'platforms;android-36' 'build-tools;36.0.0'
-      - run: chmod +x native/gradlew
-      - run: native/gradlew -p native --no-daemon :gpt-viewer:assembleDebug :paper-viewer:assembleDebug :paper-viewer:testDebugUnitTest :gpt-viewer:lintDebug :paper-viewer:lintDebug :adb-helper:assembleDebug :adb-helper:lintDebug
+      - run: chmod +x gradlew
+      - run: ./gradlew --no-daemon :gpt-viewer:assembleDebug :paper-viewer:assembleDebug :paper-viewer:testDebugUnitTest :gpt-viewer:lintDebug :paper-viewer:lintDebug :adb-helper:assembleDebug :adb-helper:lintDebug
       - uses: actions/upload-artifact@v4
         with:
           name: android-debug-apks
           path: |
-            native/gpt-viewer/build/outputs/apk/debug/*.apk
-            native/paper-viewer/build/outputs/apk/debug/*.apk
-            native/adb-helper/build/outputs/apk/debug/*.apk
+            build/gpt-viewer/outputs/apk/debug/*.apk
+            build/paper-viewer/outputs/apk/debug/*.apk
+            build/adb-helper/outputs/apk/debug/*.apk

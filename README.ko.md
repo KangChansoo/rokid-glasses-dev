@@ -34,7 +34,7 @@ Viewer 시제품은 있으며 미완료 표시는 지속적인 개발 과제를 
 
 ## 처음 시작하기
 
-1. [개발 환경](docs/DEVELOPMENT.ko.md)을 준비하고 `./scripts/build-native.ps1`를 실행합니다.
+1. [개발 환경](docs/DEVELOPMENT.ko.md)을 준비하고 `./scripts/build.ps1`를 실행합니다.
 2. `dist/adb-helper-android-debug.apk`를 폰으로 복사하고 **Hi Rokid → 홈 → 도구 상자 → 안경 앱 관리**에서 **안경에 설치**합니다. 메뉴 명칭은 앱 언어·버전에 따라 다를 수 있습니다.
 3. Helper의 **기기 정보 → 빌드 번호 7번 → 개발자 옵션 → 무선 디버깅** 순서로 설정합니다.
 4. [ADB 가이드](docs/ADB.ko.md)에 따라 현재 안경 화면의 페어링·연결 주소로 접속합니다.
@@ -43,17 +43,19 @@ Viewer 시제품은 있으며 미완료 표시는 지속적인 개발 과제를 
 ## 저장소 구성
 
 ```text
-native/
-  adb-helper/            Android 설정을 여는 진단 도구
+apps/
+  adb-helper/            Android 설정 진단 도구
   gpt-viewer/            Hello World / 가상 답변 Viewer
   paper-viewer/          안경 로컬 PDF 페이지 Viewer
-  common/                녹색 글자·검은 바탕의 공통 Android UI
+shared/android-ui/      공통 녹색 화면과 Android 버튼
+gradle/                 Gradle wrapper; 빌드 설정은 저장소 루트
 scripts/
-  build-native.ps1       빌드·lint·단위 테스트·APK 체크섬
-  adb-info.ps1           명시한 ADB 대상의 모델·버전 읽기
+  build.ps1              앱 하나 또는 전체 빌드, artifacts.json 갱신
   check.py               문서 링크·JSON·XML 검사
 docs/                    영어·한국어 안내
 measurements/            빈 배터리·입력 측정 양식
+build/                   모듈별 생성 파일 (Git 제외)
+dist/                    APK 파일과 artifacts.json 하나 (Git 제외)
 ```
 
 APK 산출물, 실제 논문·추출 본문·기기 식별자·개인 캡처·ADB 키·API 키·서명 키는 Git에 넣지 않습니다. APK에 PDF도 포함하지 않습니다. 현재 Viewer는 내부 사본 한 부를 만듭니다. 원본 직접 열기는 개선 계획이며 아직 구현하지 않았습니다. [보안 가이드](SECURITY.ko.md)를 참고하세요.

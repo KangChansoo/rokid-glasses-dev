@@ -20,7 +20,7 @@ All three apps passed assembleDebug and lintDebug; Paper Viewer passed four JVM 
 
 The fresh repository build executed 179 Gradle tasks. Lint reported 0 errors for each app: three warnings each for GPT/Paper Viewer and two for Helper (portrait assumptions and, for viewers, untranslated prototype strings). Python source-metadata checks passed; the original run covered 20 Markdown/JSON/XML files. Later documentation adds files without changing APKs.
 
-The read-only ADB helper returned model/API for an explicit target and refused an unspecified target when two transports were present. GitHub Actions is configured; local checks and server-side CI results are separate.
+The previous read-only ADB script returned model/API for an explicit target and refused an unspecified target when two transports were present. GitHub Actions is configured; local checks and server-side CI results are separate.
 
 | APK | Bytes | SHA-256 |
 |---|---:|---|
@@ -28,7 +28,15 @@ The read-only ADB helper returned model/API for an explicit target and refused a
 | `paper-viewer-android-debug.apk` | 51344 | `3a13889d6872e5b36f3632ec84e3d5ffd44d569cc70d0724da158cd3c40e5712` |
 | `adb-helper-android-debug.apk` | 23732 | `884084ba34c3d5cc47113b4d867fe74219d2ff4b0cfbd8d824a89ee206d70a37` |
 
-These hashes describe that build, not every future APK. Current local build output is recorded in ignored `dist/android-apk-checksums.json`.
+These hashes describe that build, not every future APK. Current local build output is recorded in ignored `dist/artifacts.json`.
+
+## Repository layout verification
+
+The app modules now live under `apps/`, with `shared/android-ui/` for common UI and the Gradle wrapper/settings at the root. Generated files use `build/<module>/`. All 16 Java/XML source files are byte-identical to the previous layout, and the three project APK hashes still match the table above.
+
+The root build passed assembleDebug and lintDebug for all three apps and four Paper Viewer JVM tests. Current lint reports have zero errors and three warnings per app; they cover the selected Gradle version, orientation assumptions and prototype strings. After removing the old layout, `./scripts/build.ps1 -App paper-viewer` also passed independently. These are build checks, not another glasses usability test.
+
+`dist/` now contains flat APK files and a single `artifacts.json`. The build verifies hashes, package/SDK metadata, permissions, backup exclusions, signatures and alignment. The existing external AnExplorer APK is unchanged and marked `external`; its permissions are separate from this project's zero-permission apps. `adb-info.ps1` was removed in favor of the explicit-target standard commands in the [ADB guide](ADB.md).
 
 ## Still pending
 

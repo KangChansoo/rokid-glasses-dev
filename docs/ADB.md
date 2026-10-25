@@ -72,19 +72,24 @@ For the tested glasses, model and internal serial comparisons in memory confirme
 Commands without a target may fail with `more than one device/emulator`. Use **`-s`** with one complete first-column value from `adb devices`: either IP:port or the mDNS name.
 
 ```powershell
-./scripts/adb-info.ps1 -Serial $deviceEndpoint
+adb -s $deviceEndpoint shell getprop ro.product.model
 adb -s $deviceEndpoint install -r ./dist/gpt-viewer-android-debug.apk
 ```
 
 To remove a manual connection, run `adb disconnect $deviceEndpoint` and inspect the list again. If the mDNS entry remains, it can be used with `-s`. Automatic reconnection can change the list; specifying a target is more reliable than trying to force one entry. No global PC mDNS setting needs to be changed.
 
-## 6. Read-only information helper
+## 6. Read device information directly
+
+Use standard ADB commands with an explicit target; a separate information wrapper is unnecessary.
 
 ```powershell
-./scripts/adb-info.ps1 -Serial $deviceEndpoint
+adb -s $deviceEndpoint shell getprop ro.product.model
+adb -s $deviceEndpoint shell getprop ro.product.manufacturer
+adb -s $deviceEndpoint shell getprop ro.build.version.release
+adb -s $deviceEndpoint shell getprop ro.build.version.sdk
 ```
 
-It reads model, manufacturer, Android version and API only. The Serial parameter takes the first column from `adb devices`; it does not require discovering the hardware serial. If multiple transports exist and no target is supplied, it stops. It does not install apps, transfer files, change settings, restart the ADB server or write logs.
+These commands read model/version information only. They do not install apps, transfer files or change settings. The target is the first column of adb devices, not necessarily the hardware serial.
 
 ## 7. Disconnect and reconnect
 
