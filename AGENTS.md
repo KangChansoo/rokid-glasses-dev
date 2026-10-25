@@ -23,3 +23,10 @@ Develop standalone Android APKs under apps/. Use Hi Rokid Toolbox for the first 
 - Commit work on the feature branch, run the relevant checks, then merge it into `dev`. Never work directly on `main`; keep development commits off `dev` until they are integrated from a feature branch.
 - Promote tested `dev` to `main` only for a user-authorized release. Ordinary development requests do not authorize a release merge. Preserve history; do not reset or force-push shared branches.
 - After integrating a finished feature, leave the local checkout on `dev`. Create the next feature branch before editing again. Keep English and Korean workflow documentation aligned.
+
+## Local emulator tooling
+
+- tools/emulator.py is a Windows Python control panel/CLI for an isolated AOSP API 32 lab, not a Rokid firmware simulator. Capture actual display values before claiming a display match; the initial resolution/density are explicitly provisional.
+- Keep VM disks, display captures, PDFs, emulator logs and screenshots under ignored .emulator/. Never commit these artifacts or save raw device identifiers in a profile.
+- Capture from an explicit device is read-only. All install/input/transfer/stop operations must verify an online emulator transport, qemu property and exact owned AVD name. Never fall back to a physical or unrelated target, reset the global ADB server or automatically uninstall/clear data.
+- Run python -m unittest discover -s tests -v and python scripts/check.py for tooling changes. Verify real VM boot/app flows when available; distinguish PC emulator evidence from physical-glasses verification and performance.

@@ -41,3 +41,5 @@ __pycache__/
 .vscode/
 .DS_Store
 Thumbs.db
+# Local Android lab: VM disks, profiles, PDFs and logs
+.emulator/

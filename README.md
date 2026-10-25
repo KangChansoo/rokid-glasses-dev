@@ -42,6 +42,8 @@ Current apps use **Java and standard Android APIs**. There is no C/NDK processin
 
 **Branches:** develop on `feature/<name>` from `dev`, integrate into `dev`, then promote to `main` for releases. See the [branch workflow](docs/DEVELOPMENT.md#branch-workflow).
 
+For PC-first development, use the [local Android lab](docs/EMULATOR.md): `python tools/emulator.py`. It runs real APKs; display values remain provisional until captured from the glasses.
+
 ## Repository
 
 ```text
@@ -51,6 +53,8 @@ apps/
   paper-viewer/          Local PDF page viewer
 shared/android-ui/      Shared green-on-black Android UI
 gradle/                 Gradle wrapper; build settings live at the root
+tools/emulator.py       Python Android lab panel and CLI
+tests/                  PC tooling checks
 scripts/
   build.ps1              Build one app or all apps; update artifacts.json
   check.py               Markdown links, JSON and XML checks

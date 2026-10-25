@@ -38,6 +38,16 @@ The root build passed assembleDebug and lintDebug for all three apps and four Pa
 
 `dist/` now contains flat APK files and a single `artifacts.json`. The build verifies hashes, package/SDK metadata, permissions, backup exclusions, signatures and alignment. The existing external AnExplorer APK is unchanged and marked `external`; its permissions are separate from this project's zero-permission apps. `adb-info.ps1` was removed in favor of the explicit-target standard commands in the [ADB guide](ADB.md).
 
+## PC Android lab verification
+
+The isolated AOSP API 32 x86_64 AVD booted with WHPX acceleration. It reported 480 × 640 and 160 dpi, matching the **provisional lab profile**, not a display measurement from the glasses. No physical device was connected during this validation. No Windows feature or reboot command was used.
+
+Ten Python tests passed for display parsing/validation, read-only capture without saved identifiers, and refusal to install or send input to physical, unrelated or ambiguous emulator targets. Documentation/JSON/XML checks covered 33 files. The Python panel layout was inspected on Windows.
+
+The real project APKs were installed and launched in the VM. GPT Viewer passed Page Up/Down, Next tap and single Enter activation after Tab focus. Paper Viewer passed generated-demo rendering, paging, transfer of that generated PDF to the app folder, import and zoom. ADB Helper launched without changing settings. A selected-app log snapshot was readable. The Python Build & run command also passed Paper Viewer's existing build, lint and four JVM tests before installation/launch.
+
+Only the app's generated three-page demonstration PDF was used; no real paper was transferred. Runtime screenshots, VM disks and logs are private in ignored .emulator/ and are not published. These checks do not establish Rokid firmware, temple/watch/Bluetooth input, optics, ARM/native ABI compatibility or hardware performance. Capturing real display values and checking representative flows on the glasses remain pending.
+
 ## Still pending
 
 GPT Viewer device display/input; complete PDF picker/provider and original-access behavior; panning/zoom/navigation/resume; fonts/long documents; per-app temple/watch/phone control; controlled power/memory/latency measurements. There is no live API, phone companion, camera AI or C/NDK processing yet.

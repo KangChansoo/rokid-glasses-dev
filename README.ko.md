@@ -42,6 +42,8 @@ Viewer 시제품은 있으며 미완료 표시는 지속적인 개발 과제를 
 
 **브랜치:** `dev`에서 `feature/<name>`을 만들어 작업하고 `dev`로 통합한 뒤, 릴리즈할 때 `main`으로 반영합니다. [브랜치 운영](docs/DEVELOPMENT.ko.md#브랜치-운영)을 참고하세요.
 
+PC에서 먼저 개발하려면 [Android 개발 환경](docs/EMULATOR.ko.md)을 사용합니다: `python tools/emulator.py`. 실제 APK를 실행하며 안경에서 화면 값을 읽기 전까지 화면 설정은 임시값입니다.
+
 ## 저장소 구성
 
 ```text
@@ -51,6 +53,8 @@ apps/
   paper-viewer/          안경 로컬 PDF 페이지 Viewer
 shared/android-ui/      공통 녹색 화면과 Android 버튼
 gradle/                 Gradle wrapper; 빌드 설정은 저장소 루트
+tools/emulator.py       Python Android 개발 패널·CLI
+tests/                  PC 도구 검사
 scripts/
   build.ps1              앱 하나 또는 전체 빌드, artifacts.json 갱신
   check.py               문서 링크·JSON·XML 검사
