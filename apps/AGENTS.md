@@ -9,3 +9,6 @@ The user's active development path is ordinary Android APKs installed through Hi
 - Render one page at a time off the UI thread with bounded bitmap allocation; close renderer/page/file resources, and discard stale jobs after navigation or Activity destruction.
 - Preserve Android's native mouse/Enter activation and Back behavior. Do not duplicate button activation in key handlers.
 - Validate with the Gradle wrapper: assembleDebug, testDebugUnitTest and lintDebug. Check all APK manifests and signatures. Label device verification separately.
+
+- User-confirmed input modes are separate: Touchpad (pointer, click/double-click, two-finger horizontal/vertical scroll) and Buttons (four directions, Enter, Back). Design and validate essential flows in each mode independently. Do not require PC-only Tab/Page keys, assume button-mode PDF panning is already implemented, or invent double-click/temple gesture commands.
+- The normal device workflow is APK transfer/installation through Hi Rokid or AnExplorer. Physical-glasses ADB pairing/capture is optional; the PC lab's internal ADB remains necessary for its own VM.

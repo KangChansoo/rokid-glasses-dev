@@ -48,6 +48,12 @@ The real project APKs were installed and launched in the VM. GPT Viewer passed P
 
 Only the app's generated three-page demonstration PDF was used; no real paper was transferred. Runtime screenshots, VM disks and logs are private in ignored .emulator/ and are not published. These checks do not establish Rokid firmware, temple/watch/Bluetooth input, optics, ARM/native ABI compatibility or hardware performance. Capturing real display values and checking representative flows on the glasses remain pending.
 
+## Separate input-mode checks
+
+The user clarified two available modes: Touchpad (pointer, click/double-click and two-finger horizontal/vertical scroll) and Buttons (four directions, Enter, Back). The panel now selects these modes separately; Tab/Page shortcuts and optional physical-device ADB capture are hidden under Advanced PC tools by default. These are reported device capabilities, not measured firmware event mappings.
+
+On the owned API 32 VM, GPT Viewer passed directional focus, Enter page actions and Back using only the six Buttons-mode keys. Paper Viewer passed directional button focus, next page, zoom and Back with the existing generated demo. No Tab/Page keys or mouse were used in these routes. Touchpad gesture fidelity and buttons-only PDF panning remain unverified/unimplemented respectively. No app source or APK changed for this panel/documentation update.
+
 ## Still pending
 
 GPT Viewer device display/input; complete PDF picker/provider and original-access behavior; panning/zoom/navigation/resume; fonts/long documents; per-app temple/watch/phone control; controlled power/memory/latency measurements. There is no live API, phone companion, camera AI or C/NDK processing yet.

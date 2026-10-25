@@ -34,11 +34,9 @@ Current apps use **Java and standard Android APIs**. There is no C/NDK processin
 
 ## Get started
 
-1. Follow [development setup](docs/DEVELOPMENT.md) and run `./scripts/build.ps1`.
-2. Copy `dist/adb-helper-android-debug.apk` to your phone and install it **on the glasses** through **Hi Rokid → Home → Toolbox → Glasses App Management**. Labels may vary by app language/version.
-3. In Helper, open **기기 정보 (Device info) → Build number**, tap it seven times, return to **개발자 옵션 (Developer options)**, then enable Wireless debugging.
-4. Use the glasses' current pairing/connection endpoints in the [ADB guide](docs/ADB.md).
-5. Follow [app usage](docs/APPS.md) and [PDF transfer](docs/FILE_TRANSFER.md) to test a document you own. No special folder is required when opening through a file manager.
+1. Follow [development setup](docs/DEVELOPMENT.md). Use the [PC Android lab](docs/EMULATOR.md) to develop and test the APK with separate Touchpad and Buttons modes.
+2. Build the selected app, then transfer its APK from `dist/` to your phone/glasses. Install through Hi Rokid Toolbox or AnExplorer as described in [file transfer](docs/FILE_TRANSFER.md).
+3. Follow [app usage](docs/APPS.md) to verify it on the glasses. Real-device ADB is optional; use the [ADB guide](docs/ADB.md) only when needed for diagnostics or optional display capture.
 
 **Branches:** develop on `feature/<name>` from `dev`, integrate into `dev`, then promote to `main` for releases. See the [branch workflow](docs/DEVELOPMENT.md#branch-workflow).
 
