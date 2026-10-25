@@ -6,7 +6,7 @@ import re
 import xml.etree.ElementTree as ET
 
 root = Path(__file__).resolve().parent.parent
-skip = {'.git', '.gradle', 'build', 'dist', '.cxx', '.kotlin', '.toolchain', '__pycache__', 'private'}
+skip = {'.git', '.emulator', '.gradle', 'build', 'dist', '.cxx', '.kotlin', '.toolchain', '__pycache__', 'private'}
 checked = 0
 for path in root.rglob('*'):
     relative = path.relative_to(root)

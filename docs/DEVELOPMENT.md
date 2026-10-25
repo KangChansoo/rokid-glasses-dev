@@ -81,6 +81,10 @@ Generated outputs are grouped under `build/<module>/` so the app folders contain
 
 The external AnExplorer APK is optional, is not downloaded by the build, and is not committed. The inventory reflects existing APKs in dist. A single-app build updates that app and inventories the other files already present; it does not rebuild the other apps.
 
+## PC emulator workflow
+
+Use `python tools/emulator.py` to set up/start the isolated API 32 lab and build/run apps before device deployment. See the [local Android lab](EMULATOR.md) for display capture, debugging and hardware limits.
+
 ## Documentation languages
 
 `README.md`, `SECURITY.md` and `docs/*.md` are the English entry points. Their `.ko.md` siblings are complete Korean versions. Use the language link below each title. Keep progress, commands and limitations aligned when updating either language. Korean pages link to Korean guides; English pages link to English guides.
