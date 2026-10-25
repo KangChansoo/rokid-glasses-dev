@@ -26,10 +26,21 @@ Develop standalone Android APKs under apps/. Iterate in the PC emulator, then tr
 
 ## Local emulator tooling
 
-- tools/emulator.py is a Windows Python control panel/CLI for an isolated AOSP API 32 lab, not a Rokid firmware simulator. Capture actual display values before claiming a display match; the initial resolution/density are explicitly provisional.
-- Keep VM disks, display captures, PDFs, emulator logs and screenshots under ignored .emulator/. Never commit these artifacts or save raw device identifiers in a profile.
-- Capture from an explicit device is read-only. All install/input/transfer/stop operations must verify an online emulator transport, qemu property and exact owned AVD name. Never fall back to a physical or unrelated target, reset the global ADB server or automatically uninstall/clear data.
+- tools/emulator.py is a Windows Python control panel/CLI for an isolated AOSP API 32 lab, not a Rokid firmware simulator. The Lab is strictly virtual-only and never pairs with, queries or controls real glasses/phones. Display values are local/manual and must not be claimed as measured hardware values.
+- Keep VM disks, local display settings, PDFs, emulator logs and screenshots under ignored .emulator/. Never commit these artifacts or save raw device identifiers in a profile.
+- No physical-device capture/connect/pair path is allowed. All install/input/transfer/stop operations must verify an online emulator transport, qemu property and exact owned AVD name. Never fall back to a physical or unrelated target, reset the global ADB server or automatically uninstall/clear data.
 - Run python -m unittest discover -s tests -v and python scripts/check.py for tooling changes. Verify real VM boot/app flows when available; distinguish PC emulator evidence from physical-glasses verification and performance.
 
 - User-confirmed input modes are separate: Touchpad (pointer, click/double-click, two-finger horizontal/vertical scroll) and Buttons (four directions, Enter, Back). Design and validate essential flows in each mode independently. Do not require PC-only Tab/Page keys, assume button-mode PDF panning is already implemented, or invent double-click/temple gesture commands.
-- The normal device workflow is APK transfer/installation through Hi Rokid or AnExplorer. Physical-glasses ADB pairing/capture is optional; the PC lab's internal ADB remains necessary for its own VM.
+- The normal device workflow is APK transfer/installation through Hi Rokid or AnExplorer. Physical-device installation/testing is outside the Lab; its internal ADB is private and virtual-only.
+
+## Review before publishing
+
+- Explain the purpose, file/folder changes and expected behavior before implementation. The user wants to understand the architecture before it grows.
+- Work locally on a feature branch for review. Do not push, or integrate reviewed work into shared branches, unless the user explicitly asks. Do not treat a normal change request as authorization to publish it.
+
+- The Lab GUI hosts a verified SDK-owned native emulator window using Windows APIs, with Start/Stop above, navigation buttons below, and Lab/App log tabs on the right. Do not attach arbitrary desktop windows. Handle native shutdown/detach before destroying a parent window.
+- Send file accepts regular files into emulator Download, preserves names and chooses a numbered name on collisions. Never interpolate source filenames into shell commands, open/install sent files automatically, or migrate/delete existing app-folder PDFs without a request.
+
+- Keep Lab ADB on its private loopback server with mDNS auto-connect disabled and the virtual-only USB filter. Reject physical transports and connect/pair commands before execution; never reuse or restart the normal PC device server.
+- Configure virtual display width/height/density/font scale locally only. Do not restore hardware capture or add IP/device fields. Mouse and navigation buttons are both available; no input-mode selector is needed.

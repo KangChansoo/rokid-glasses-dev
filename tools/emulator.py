@@ -17,6 +17,9 @@ import time
 ROOT = Path(__file__).resolve().parent.parent
 AVD = 'rokid_android32'
 IMAGE = 'system-images;android-32;default;x86_64'
+ADB_PORT = 5039
+EMULATOR_PORT = 5586
+NO_USB_DEVICE = 'rokid_android_lab_virtual_only'
 APPS = {name: f'dev.rokidapps.{package}' for name, package in (
     ('paper-viewer', 'paperviewer'), ('gpt-viewer', 'gptviewer'), ('adb-helper', 'adbhelper'))}
 KEYS = {'back': '4', 'enter': '66', 'tab': '61', 'up': '19', 'down': '20',
@@ -32,7 +35,7 @@ def display_profile(size: str, density: str, api: str, font: str) -> dict:
         raise ValueError('Could not read Android display size/density.')
     width, height = map(int, sizes.groups())
     return validate_profile(dict(api=int(api.strip()), width=width, height=height,
-                                 density=int(densities[1]), fontScale=1.0 if font.strip() == 'null' else float(font.strip()), source='device-display'))
+                                 density=int(densities[1]), fontScale=1.0 if font.strip() == 'null' else float(font.strip()), source='manual'))
 
 
 def validate_profile(profile: dict) -> dict:
@@ -45,7 +48,7 @@ def validate_profile(profile: dict) -> dict:
     font = profile['fontScale']
     if not isinstance(font, (float, int)) or not math.isfinite(font) or not 0.5 <= font <= 3:
         raise ValueError('Invalid font scale.')
-    if profile['source'] not in ('provisional', 'device-display'):
+    if profile['source'] not in ('provisional', 'manual'):
         raise ValueError('Invalid profile source.')
     return {key: profile[key] for key in DEFAULT}
 
@@ -53,6 +56,20 @@ def validate_profile(profile: dict) -> dict:
 def online_emulators(devices: str) -> list[str]:
     return [fields[0] for line in devices.splitlines() if len(fields := line.split()) >= 2
             and re.fullmatch(r'emulator-\d+', fields[0]) and fields[1] == 'device']
+
+
+def available_filename(name: str, existing: set[str]) -> str:
+    if not name or name in ('.', '..') or any(char in name for char in ('/', '\\', '\r', '\n', '\0')):
+        raise ValueError('Choose a file with a normal filename.')
+    if len(name.encode('utf-8')) > 220:
+        raise ValueError('Filename is too long for Android. Rename the file before sending.')
+    original = Path(name)
+    candidate = name
+    number = 2
+    while candidate in existing:
+        candidate = f'{original.stem} ({number}){original.suffix}'
+        number += 1
+    return candidate
 
 
 class Lab:
@@ -67,6 +84,11 @@ class Lab:
             raise RuntimeError('Configure sdkRoot in toolchain.local.json or set ANDROID_HOME. See docs/EMULATOR.md.')
         self.sdk = Path(sdk)
         self.env = os.environ.copy()
+        self.env.pop('ANDROID_SERIAL', None)
+        self.env.pop('ANDROID_ADB_SERVER_ADDRESS', None)
+        self.env.update(ADB_SERVER_SOCKET=f'tcp:127.0.0.1:{ADB_PORT}',
+                        ANDROID_ADB_SERVER_PORT=str(ADB_PORT), ADB_MDNS_AUTO_CONNECT='0')
+        self._adb_lock = threading.Lock()
         self.env.update(ANDROID_HOME=str(self.sdk), ANDROID_AVD_HOME=str(self.state / 'avd'),
                         ANDROID_EMULATOR_HOME=str(self.state))
         java = config.get('javaHome') or os.environ.get('JAVA_HOME')
@@ -77,6 +99,19 @@ class Lab:
         self.commands = self.sdk / 'cmdline-tools/latest/bin'
 
     def execute(self, args, timeout=60, input=None) -> str:
+        command = [str(arg) for arg in args]
+        if command[0] == str(self.adb):
+            tail = command[1:]
+            if tail != ['devices']:
+                if (len(tail) < 3 or tail[0] != '-s' or not re.fullmatch(r'emulator-\d+', tail[1])
+                        or tail[2] not in {'shell', 'emu', 'install', 'push', 'pull', 'logcat', 'exec-out'}):
+                    raise ValueError('The Lab accepts emulator targets only; connect/pair/physical commands are unavailable.')
+            with self._adb_lock:
+                self._run([self.adb, '-P', str(ADB_PORT), '--one-device', NO_USB_DEVICE, 'start-server'])
+            command = [str(self.adb), '-P', str(ADB_PORT), *tail]
+        return self._run(command, timeout=timeout, input=input)
+
+    def _run(self, args, timeout=60, input=None) -> str:
         result = subprocess.run([str(arg) for arg in args], cwd=self.root, env=self.env, input=input,
                                 capture_output=True, text=True, encoding='utf-8', errors='replace',
                                 timeout=timeout, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
@@ -88,25 +123,29 @@ class Lab:
         return result.stdout.strip()
 
     def adb_read(self, serial, *args) -> str:
+        if not re.fullmatch(r'emulator-\d+', serial):
+            raise ValueError('Only a local emulator transport can be used by the Lab.')
         return self.execute([self.adb, '-s', serial, *args])
 
     def profile(self) -> dict:
-        return validate_profile(json.loads(self.profile_path.read_text(encoding='utf-8')) if self.profile_path.exists() else DEFAULT.copy())
+        profile = json.loads(self.profile_path.read_text(encoding='utf-8')) if self.profile_path.exists() else DEFAULT.copy()
+        # Preserve only old local dimensions; there is no device-capture operation anymore.
+        if profile.get('source') == 'device-display':
+            profile['source'] = 'manual'
+        return validate_profile(profile)
 
     def describe(self) -> str:
         p = self.profile()
         return f"API {p['api']} | {p['width']} x {p['height']} | {p['density']} dpi | font {p['fontScale']} | {p['source']}"
 
-    def capture(self, serial: str) -> str:
-        if self.adb_read(serial, 'get-state') != 'device':
-            raise RuntimeError('The explicit capture device must be online and authorized.')
-        p = display_profile(self.adb_read(serial, 'shell', 'wm', 'size'),
-                            self.adb_read(serial, 'shell', 'wm', 'density'),
-                            self.adb_read(serial, 'shell', 'getprop', 'ro.build.version.sdk'),
-                            self.adb_read(serial, 'shell', 'settings', 'get', 'system', 'font_scale'))
+    def configure_display(self, width: int, height: int, density: int, font_scale: float) -> str:
+        profile = validate_profile(dict(api=32, width=width, height=height, density=density,
+                                        fontScale=font_scale, source='manual'))
+        if self.target(required=False):
+            raise RuntimeError('Stop the virtual emulator before changing its display settings.')
         self.state.mkdir(exist_ok=True)
-        self.profile_path.write_text(json.dumps(p, indent=2) + '\n', encoding='utf-8')
-        return 'Read-only display capture saved locally. Restart the lab emulator to apply.\n' + self.describe()
+        self.profile_path.write_text(json.dumps(profile, indent=2) + '\n', encoding='utf-8')
+        return 'Local display settings saved. Start the emulator to apply.\n' + self.describe()
 
     def target(self, required=True) -> str | None:
         matches = []
@@ -157,16 +196,18 @@ class Lab:
             return 'Emulator not installed. Run setup first.\n' + self.describe()
         return self.describe() + '\n' + self.execute([self.emulator, '-accel-check'])
 
-    def start(self, headless=False) -> str:
+    def start(self, headless=False, embedded=False) -> str:
         serial = self.target(required=False)
         process = None
         if not serial:
             self.setup()
             self.execute([self.emulator, '-accel-check'])
-            args = [str(self.emulator), '-avd', AVD, '-no-snapshot', '-no-audio', '-no-boot-anim',
+            args = [str(self.emulator), '-avd', AVD, '-port', str(EMULATOR_PORT), '-no-snapshot', '-no-audio', '-no-boot-anim',
                     '-camera-back', 'none', '-camera-front', 'none']
             if headless:
                 args.append('-no-window')
+            elif embedded:
+                args.append('-no-skin')
             with (self.state / 'emulator.log').open('ab') as log:
                 process = subprocess.Popen(args, cwd=self.root, env=self.env, stdout=log, stderr=log,
                                            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
@@ -206,21 +247,30 @@ class Lab:
         self.adb_read(self.target(), 'shell', 'input', 'keyevent', KEYS[key])
         return f'Sent Android {key} to the lab emulator.'
 
-    def send_pdf(self, path: Path) -> str:
-        if not path.is_file() or path.suffix.lower() != '.pdf':
-            raise ValueError('Choose an existing PDF file.')
-        if path.stat().st_size > 200 * 1024 * 1024:
-            raise ValueError('Paper Viewer accepts PDFs up to 200 MiB.')
+    def send_file(self, path: Path) -> str:
+        source = path.expanduser().resolve(strict=True)
+        if not source.is_file():
+            raise ValueError('Choose an existing file, not a folder.')
+        # Validate before any device operation. Only the push protocol sees the filename;
+        # it is never interpolated into an Android shell command.
+        available_filename(source.name, set())
         serial = self.target()
-        # The project app folder offers a deterministic alternative to provider-specific pickers.
-        folder = '/sdcard/Android/data/dev.rokidapps.paperviewer/files/Documents'
+        folder = '/sdcard/Download'
         self.adb_read(serial, 'shell', 'mkdir', '-p', folder)
-        self.adb_read(serial, 'push', str(path.resolve()), folder + '/lab-document.pdf')
-        return 'PDF sent to lab emulator only as lab-document.pdf (replaces the previous lab transfer).\nOpen Paper Viewer > 앱 폴더. It stays private in the ignored AVD data.'
+        existing = set(self.adb_read(serial, 'shell', 'ls', '-1a', folder).splitlines())
+        filename = available_filename(source.name, existing)
+        destination = folder + '/' + filename
+        self.execute([self.adb, '-s', serial, 'push', str(source), destination], timeout=600)
+        return (f'Sent file to Download/{filename}.\n'
+                'Open it using a file manager or the app file picker > internal storage > Download.\n'
+                'The file was not opened or installed automatically.')
 
     def logs(self, app: str) -> str:
         serial = self.target()
-        pid = self.adb_read(serial, 'shell', 'pidof', '-s', APPS[app])
+        try:
+            pid = self.adb_read(serial, 'shell', 'pidof', '-s', APPS[app])
+        except RuntimeError as error:
+            raise RuntimeError('The selected app is not running. Launch it to see its logs.') from error
         if not re.fullmatch(r'\d+', pid):
             raise RuntimeError('App is not running; launch it first.')
         return self.adb_read(serial, 'logcat', '-d', '-t', '300', '--pid=' + pid) or 'No recent app logs.'
@@ -229,133 +279,450 @@ class Lab:
         return self.adb_read(self.target(), 'emu', 'kill')
 
 
-def gui(lab: Lab):
-    import tkinter as tk
-    from tkinter import ttk, filedialog, simpledialog
+class NativeEmulatorHost:
+    """Host the SDK-owned Qt window; Android rendering/input stays native."""
+    def __init__(self, stage, lab):
+        import ctypes
+        from ctypes import wintypes as w
+        if sys.platform != 'win32':
+            raise RuntimeError('The integrated native display currently requires Windows.')
+        self.ctypes, self.w, self.stage, self.lab = ctypes, w, stage, lab
+        self.u = ctypes.WinDLL('user32', use_last_error=True)
+        self.k = ctypes.WinDLL('kernel32', use_last_error=True)
+        self.callback = ctypes.WINFUNCTYPE(w.BOOL, w.HWND, w.LPARAM)
+        self.u.EnumWindows.argtypes = (self.callback, w.LPARAM)
+        self.u.GetWindowTextW.argtypes = (w.HWND, w.LPWSTR, ctypes.c_int)
+        self.u.GetWindowThreadProcessId.argtypes = (w.HWND, ctypes.POINTER(w.DWORD))
+        self.u.GetWindowLongPtrW.argtypes = (w.HWND, ctypes.c_int)
+        self.u.GetWindowLongPtrW.restype = ctypes.c_ssize_t
+        self.u.SetWindowLongPtrW.argtypes = (w.HWND, ctypes.c_int, ctypes.c_ssize_t)
+        self.u.SetWindowLongPtrW.restype = ctypes.c_ssize_t
+        self.u.SetParent.argtypes = (w.HWND, w.HWND); self.u.SetParent.restype = w.HWND
+        self.u.GetParent.argtypes = (w.HWND,); self.u.GetParent.restype = w.HWND
+        self.u.GetWindow.argtypes = (w.HWND, w.UINT); self.u.GetWindow.restype = w.HWND
+        self.u.GetWindowRect.argtypes = (w.HWND, ctypes.POINTER(w.RECT))
+        self.u.ClientToScreen.argtypes = (w.HWND, ctypes.POINTER(w.POINT))
+        self.u.IsWindow.argtypes = (w.HWND,)
+        self.u.IsWindowVisible.argtypes = (w.HWND,)
+        self.u.ShowWindow.argtypes = (w.HWND, ctypes.c_int)
+        self.u.SetWindowPos.argtypes = (w.HWND, w.HWND, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, w.UINT)
+        self.k.OpenProcess.argtypes = (w.DWORD, w.BOOL, w.DWORD); self.k.OpenProcess.restype = w.HANDLE
+        self.k.QueryFullProcessImageNameW.argtypes = (w.HANDLE, w.DWORD, w.LPWSTR, ctypes.POINTER(w.DWORD))
+        self.k.CloseHandle.argtypes = (w.HANDLE,)
+        self.child = None
+        self.old_style = self.old_parent = None
+        self.hidden_tools = []
+        stage.bind('<Configure>', lambda event: self.resize())
 
+    def title(self, handle):
+        value = self.ctypes.create_unicode_buffer(512)
+        self.u.GetWindowTextW(handle, value, len(value))
+        return value.value
+
+    def sdk_process(self, handle):
+        pid = self.w.DWORD()
+        self.u.GetWindowThreadProcessId(handle, self.ctypes.byref(pid))
+        process = self.k.OpenProcess(0x1000, False, pid.value)
+        if not process:
+            return False
+        try:
+            image = self.ctypes.create_unicode_buffer(32768)
+            length = self.w.DWORD(len(image))
+            return bool(self.k.QueryFullProcessImageNameW(process, 0, image, self.ctypes.byref(length))
+                        and Path(image.value).is_relative_to(self.lab.sdk.resolve())
+                        and Path(image.value).name.lower() == 'qemu-system-x86_64.exe')
+        finally:
+            self.k.CloseHandle(process)
+
+    def attached(self):
+        if self.child and self.u.IsWindow(self.child):
+            return True
+        self.child = None
+        return False
+
+    def attach(self, serial=None):
+        if self.attached():
+            if serial and not native_title_matches(self.title(self.child), serial):
+                raise RuntimeError('The attached native window does not match the verified lab target.')
+            return True
+        matches = []
+        @self.callback
+        def visit(handle, extra):
+            if native_title_matches(self.title(handle), serial) and self.sdk_process(handle):
+                matches.append(handle)
+            return True
+        self.u.EnumWindows(visit, 0)
+        if len(matches) > 1:
+            if serial is None:  # Qt can expose transient startup windows before the VM is ready.
+                return False
+            raise RuntimeError('Multiple SDK windows match the lab. Close the extra lab instance.')
+        if not matches:
+            return False
+        handle = matches[0]
+        self.old_style = self.u.GetWindowLongPtrW(handle, -16)
+        self.old_parent = self.u.GetParent(handle)
+        # Remove the independent window frame; preserve native Qt client rendering.
+        style = (self.old_style & ~0x80cf0000) | 0x46000000
+        self.u.SetWindowLongPtrW(handle, -16, style)
+        self.ctypes.set_last_error(0)
+        self.u.SetParent(handle, self.stage.winfo_id())
+        if self.u.GetParent(handle) != self.stage.winfo_id():
+            self.u.SetWindowLongPtrW(handle, -16, self.old_style)
+            raise RuntimeError('Windows could not attach the emulator display. Check process privilege/DPI settings.')
+        self.child = handle
+        self.u.ShowWindow(handle, 5)
+        self.resize()
+        return True
+
+    def hide_toolbar(self):
+        if not self.attached():
+            return
+        @self.callback
+        def visit(handle, extra):
+            # Hide only tool windows owned by this exact emulator client window.
+            if (self.u.GetWindow(handle, 4) == self.child
+                    and self.u.GetWindowLongPtrW(handle, -20) & 0x80
+                    and self.u.IsWindowVisible(handle) and self.sdk_process(handle)):
+                if handle not in self.hidden_tools:
+                    self.hidden_tools.append(handle)
+                self.u.ShowWindow(handle, 0)
+            return True
+        self.u.EnumWindows(visit, 0)
+
+    def resize(self):
+        if not self.attached():
+            return
+        p = self.lab.profile()
+        width, height = self.stage.winfo_width(), self.stage.winfo_height()
+        scale = min(1.0, width / p['width'], height / p['height'])
+        w, h = max(1, int(p['width'] * scale)), max(1, int(p['height'] * scale))
+        x, y = (width - w) // 2, (height - h) // 2
+        bounds = self.w.RECT(); origin = self.w.POINT(0, 0)
+        self.u.GetWindowRect(self.child, self.ctypes.byref(bounds))
+        self.u.ClientToScreen(self.stage.winfo_id(), self.ctypes.byref(origin))
+        actual = (bounds.left - origin.x, bounds.top - origin.y,
+                  bounds.right - bounds.left, bounds.bottom - bounds.top)
+        if actual != (x, y, w, h):
+            self.u.SetWindowPos(self.child, None, x, y, w, h, 0x0034)
+        self.hide_toolbar()
+
+    def release(self):
+        if self.attached():
+            self.u.SetParent(self.child, self.old_parent)
+            self.u.SetWindowLongPtrW(self.child, -16, self.old_style)
+            self.u.ShowWindow(self.child, 5)
+            for handle in self.hidden_tools:
+                if self.u.IsWindow(handle):
+                    self.u.ShowWindow(handle, 5)
+        self.child = None
+        self.hidden_tools.clear()
+
+
+def native_title_matches(title: str, serial: str | None = None) -> bool:
+    if not title.startswith('Android Emulator - '):
+        return False
+    port = str(EMULATOR_PORT) if serial is None else serial.removeprefix('emulator-')
+    if serial is not None and not re.fullmatch(r'emulator-\d+', serial):
+        return False
+    return re.search(r'\b' + re.escape(AVD) + ':' + port + r'\b', title) is not None
+
+
+def gui(lab: Lab):
+    import ctypes
+    import tkinter as tk
+    from tkinter import ttk, filedialog
+
+    if sys.platform == 'win32':
+        try:
+            api = ctypes.WinDLL('user32', use_last_error=True)
+            api.SetProcessDpiAwarenessContext.argtypes = (ctypes.c_void_p,)
+            api.SetProcessDpiAwarenessContext(ctypes.c_void_p(-4))
+        except (AttributeError, OSError):
+            pass
     window = tk.Tk()
     window.title('Rokid Android Lab')
-    window.geometry('790x650')
-    window.minsize(690, 550)
-    frame = ttk.Frame(window, padding=16)
-    frame.pack(fill='both', expand=True)
-    ttk.Label(frame, text='Rokid Android Lab', font=('Segoe UI', 19, 'bold')).pack(anchor='w')
-    ttk.Label(frame, text='Real APKs on AOSP Android. Emulator screen opens in a separate window.').pack(anchor='w')
+    window.geometry(f'1280x{min(980, window.winfo_screenheight() - 90)}')
+    window.minsize(1040, min(lab.profile()['height'] + 290, window.winfo_screenheight() - 70))
+    frame = ttk.Frame(window, padding=12); frame.pack(fill='both', expand=True)
+    heading = ttk.Frame(frame); heading.pack(fill='x', pady=(0, 8))
+    ttk.Label(heading, text='Rokid Android Lab', font=('Segoe UI', 18, 'bold')).pack(side='left')
     profile = tk.StringVar(value=lab.describe())
-    ttk.Label(frame, textvariable=profile).pack(anchor='w', pady=(6, 4))
-    ttk.Label(frame, text='Provisional screen until captured. Rokid OS, temple/Bluetooth input and optics are not emulated.',
-              wraplength=740).pack(anchor='w', pady=(0, 12))
+    ttk.Label(heading, textvariable=profile).pack(side='right')
+    panes = ttk.Panedwindow(frame, orient='horizontal'); panes.pack(fill='both', expand=True)
+    left = ttk.Frame(panes, width=820); right = ttk.Frame(panes, width=360)
+    panes.add(left, weight=3); panes.add(right, weight=1)
+    left.columnconfigure(0, weight=1); left.rowconfigure(1, weight=1)
+    power = ttk.Frame(left); power.grid(row=0, column=0, sticky='ew', pady=(0, 6))
+    stage = tk.Frame(left, background='#090b0c', highlightthickness=1, highlightbackground='#30383d')
+    stage.grid(row=1, column=0, sticky='nsew', padx=(0, 8))
+    placeholder = tk.Label(stage, text='Start emulator\nThe virtual Android display appears here.',
+                           fg='#aebbc2', bg='#090b0c', font=('Segoe UI', 15), justify='center')
+    placeholder.place(relx=.5, rely=.5, anchor='center')
+    host = NativeEmulatorHost(stage, lab)
+    actions = ttk.Frame(left); actions.grid(row=2, column=0, sticky='ew', pady=(8, 4))
+    input_area = ttk.Frame(left); input_area.grid(row=3, column=0, sticky='ew')
+    status = tk.StringVar(value='Ready — virtual environment only.')
+    ttk.Label(left, textvariable=status).grid(row=4, column=0, sticky='w', pady=(6, 0))
+
+    notebook = ttk.Notebook(right); notebook.pack(fill='both', expand=True)
+    lab_tab = ttk.Frame(notebook, padding=6); app_tab = ttk.Frame(notebook, padding=6)
+    notebook.add(lab_tab, text='Lab'); notebook.add(app_tab, text='App log')
+    lab_tab.columnconfigure(0, weight=1); lab_tab.rowconfigure(1, weight=1)
+    lab_tools = ttk.Frame(lab_tab); lab_tools.grid(row=0, column=0, sticky='ew', pady=(0, 6))
+    def console(parent):
+        container = ttk.Frame(parent)
+        container.columnconfigure(0, weight=1); container.rowconfigure(0, weight=1)
+        text = tk.Text(container, wrap='none', font=('Consolas', 9), width=38)
+        vertical = ttk.Scrollbar(container, orient='vertical', command=text.yview)
+        horizontal = ttk.Scrollbar(container, orient='horizontal', command=text.xview)
+        text.configure(yscrollcommand=vertical.set, xscrollcommand=horizontal.set)
+        text.grid(row=0, column=0, sticky='nsew'); vertical.grid(row=0, column=1, sticky='ns')
+        horizontal.grid(row=1, column=0, sticky='ew')
+        return container, text
+    lab_console, output = console(lab_tab); lab_console.grid(row=1, column=0, sticky='nsew')
+    output.insert('end', 'Virtual Android development only.\n\nStart emulator → choose app → Build & run.\n'
+                  'Use the mouse or the buttons below the screen.\n'
+                  'Send file copies into Android Download.\n\nLab never pairs with, queries or controls real glasses.\n')
+    app_tab.columnconfigure(0, weight=1); app_tab.rowconfigure(2, weight=1)
+    log_header = ttk.Frame(app_tab); log_header.grid(row=0, column=0, sticky='ew', pady=(0, 4))
+    app_log_label = tk.StringVar(value='paper-viewer')
+    ttk.Label(log_header, textvariable=app_log_label).pack(side='left')
+    auto_logs = tk.BooleanVar(value=True)
+    ttk.Checkbutton(log_header, text='Auto', variable=auto_logs).pack(side='right')
+    log_status = tk.StringVar(value='Recent selected-app log (up to 300 entries).')
+    ttk.Label(app_tab, textvariable=log_status, wraplength=330).grid(row=1, column=0, sticky='w', pady=(0, 4))
+    app_console, app_output = console(app_tab); app_console.grid(row=2, column=0, sticky='nsew')
     jobs = queue.Queue()
     controls = []
-    busy = False
-    status = tk.StringVar(value='Ready')
-    output = tk.Text(frame, wrap='word', height=14)
+    busy = closing = close_requested = embedding_requested = False
+    alive = True
 
-    def submit(action):
+    def report(message, error=False):
+        output.insert('end', ('\nERROR: ' if error else '\n') + str(message) + '\n')
+        output.see('end')
+        if int(output.index('end-1c').split('.')[0]) > 1200:
+            output.delete('1.0', '200.0')
+
+    def submit(action, success=None):
         nonlocal busy
-        if busy:
+        if busy or closing:
             return
         busy = True
-        status.set('Working… setup/build/boot can take several minutes.')
+        status.set('Working…')
         for control in controls:
             control.configure(state='disabled')
         def worker():
             try:
-                jobs.put((True, action()))
+                jobs.put((True, action(), success))
             except Exception as error:
-                jobs.put((False, str(error)))
+                jobs.put((False, str(error), None))
         threading.Thread(target=worker, daemon=True).start()
 
-    def button(parent, text, action):
-        control = ttk.Button(parent, text=text, command=lambda: submit(action))
-        control.pack(side='left', padx=(0, 5), pady=4)
+    def button(parent, label, callback):
+        control = ttk.Button(parent, text=label, command=callback)
+        control.pack(side='left', padx=(0, 5), pady=3)
         controls.append(control)
+        return control
 
-    def capture():
-        serial = simpledialog.askstring('Read display profile', 'Exact first-column target from adb devices (read only):', parent=window)
+    def attached(serial):
+        nonlocal embedding_requested
+        embedding_requested = True
+        if serial and not host.attach(serial):
+            embedding_requested = False
+            raise RuntimeError('This VM has no native display (possibly headless). Use Stop, then Start emulator to attach it here.')
         if serial:
-            submit(lambda: lab.capture(serial.strip()))
+            embedding_requested = True
+            placeholder.place_forget()
+            host.resize()
 
-    def pdf():
-        path = filedialog.askopenfilename(parent=window, filetypes=[('PDF', '*.pdf')])
-        if path:
-            submit(lambda: lab.send_pdf(Path(path)))
+    def start():
+        nonlocal embedding_requested
+        embedding_requested = True
+        def boot():
+            message = lab.start(embedded=True)
+            return message, lab.target()
+        submit(boot, lambda result: attached(result[1]))
 
-    top = ttk.Frame(frame); top.pack(fill='x')
-    button(top, 'Check environment', lab.doctor)
-    button(top, 'Setup', lab.setup)
-    button(top, 'Start emulator', lab.start)
-    button(top, 'Stop emulator', lab.stop)
-    row = ttk.Frame(frame); row.pack(fill='x', pady=8)
+    def stopped(result=None):
+        nonlocal embedding_requested
+        embedding_requested = False
+        host.child = None
+        placeholder.configure(text='Emulator stopped\nSaved apps and files are retained.')
+        placeholder.place(relx=.5, rely=.5, anchor='center')
+
     selected = tk.StringVar(value='paper-viewer')
-    selector = ttk.Combobox(row, textvariable=selected, values=list(APPS), state='readonly', width=18)
-    selector.pack(side='left', padx=(0, 8))
-    def app_button(label, action):
-        # Snapshot the selection on the Tk thread before starting background work.
-        control = ttk.Button(row, text=label, command=lambda: submit(lambda app=selected.get(): action(app)))
-        control.pack(side='left', padx=(0, 5), pady=4)
-        controls.append(control)
-    app_button('Build & run', lambda app: lab.launch(app, build=True))
-    app_button('Run existing APK', lab.launch)
-    app_button('App logs', lab.logs)
-    transfer = ttk.Button(row, text='Send PDF', command=pdf)
-    transfer.pack(side='left', pady=4); controls.append(transfer)
-    mode_row = ttk.Frame(frame); mode_row.pack(fill='x', pady=(4, 6))
-    ttk.Label(mode_row, text='Input mode:').pack(side='left', padx=(0, 8))
-    mode = tk.StringVar(value='Touchpad')
-    mode_selector = ttk.Combobox(mode_row, textvariable=mode, values=('Touchpad', 'Buttons'), state='readonly', width=14)
-    mode_selector.pack(side='left')
-    mode_hint = tk.StringVar()
-    ttk.Label(frame, textvariable=mode_hint, wraplength=660).pack(anchor='w')
-    pad_container = ttk.Frame(frame); pad_container.pack(fill='x')
-    pad = ttk.Frame(pad_container)
+    selector = ttk.Combobox(actions, textvariable=selected, values=list(APPS), state='readonly', width=16)
+    selector.pack(side='left', padx=(0, 8)); controls.append(selector)
+    button(power, 'Start', start)
+    button(power, 'Stop', lambda: submit(lab.stop, stopped))
+    button(actions, 'Build & run', lambda: submit(lambda app=selected.get(): lab.launch(app, build=True)))
+    button(actions, 'Run APK', lambda: submit(lambda app=selected.get(): lab.launch(app)))
+    def send_file():
+        source = filedialog.askopenfilename(parent=window, title='Send file to Android Download', filetypes=[('All files', '*')])
+        if source:
+            submit(lambda: lab.send_file(Path(source)))
+    button(actions, 'Send file', send_file)
+
+    pad = ttk.Frame(input_area); pad.pack(pady=3)
     for key, r, c in (('up', 0, 1), ('left', 1, 0), ('enter', 1, 1), ('right', 1, 2), ('down', 2, 1), ('back', 2, 3)):
         control = ttk.Button(pad, text=key.title(), width=9,
                              command=lambda key=key: submit(lambda: lab.key(key)))
-        control.grid(row=r, column=c, padx=3, pady=3)
-        controls.append(control)
+        control.grid(row=r, column=c, padx=3, pady=2); controls.append(control)
+    button(lab_tools, 'Check', lambda: submit(lab.doctor))
+    button(lab_tools, 'Setup', lambda: submit(lab.setup))
 
-    def set_mode(event=None):
-        if mode.get() == 'Buttons':
-            mode_hint.set('Buttons: Up / Down / Left / Right, Enter and Back. Test this mode without mouse or touchpad input.')
-            pad.pack(anchor='w', pady=4)
-        else:
-            mode_hint.set('Touchpad: pointer, click/double-click and horizontal/vertical scrolling in the emulator window.')
-            pad.pack_forget()
-    mode_selector.bind('<<ComboboxSelected>>', set_mode)
-    set_mode()
+    def display_settings():
+        dialog = tk.Toplevel(window)
+        dialog.title('Virtual display settings'); dialog.transient(window); dialog.grab_set()
+        form = ttk.Frame(dialog, padding=16); form.pack(fill='both', expand=True)
+        current = lab.profile()
+        entries = {}
+        for row, (name, label) in enumerate((('width', 'Width (px)'), ('height', 'Height (px)'),
+                                             ('density', 'Density (dpi)'), ('fontScale', 'Font scale'))):
+            ttk.Label(form, text=label).grid(row=row, column=0, sticky='w', padx=(0, 14), pady=4)
+            value = tk.StringVar(value=str(current[name])); entries[name] = value
+            ttk.Entry(form, textvariable=value, width=16).grid(row=row, column=1, pady=4)
+        error = tk.StringVar(value='Stop the virtual emulator before applying. API is fixed at 32.')
+        ttk.Label(form, textvariable=error, wraplength=360).grid(row=4, column=0, columnspan=2, pady=10)
+        def apply():
+            try:
+                values = (int(entries['width'].get()), int(entries['height'].get()),
+                          int(entries['density'].get()), float(entries['fontScale'].get()))
+                validate_profile(dict(api=32, width=values[0], height=values[1], density=values[2],
+                                      fontScale=values[3], source='manual'))
+            except ValueError as problem:
+                error.set(str(problem)); return
+            submit(lambda: lab.configure_display(*values), lambda result: dialog.destroy() if dialog.winfo_exists() else None)
+        ttk.Button(form, text='Apply locally', command=apply).grid(row=5, column=0, pady=4)
+        ttk.Button(form, text='Cancel', command=dialog.destroy).grid(row=5, column=1, pady=4)
+    button(lab_tools, 'Display…', display_settings)
 
-    advanced_container = ttk.Frame(frame); advanced_container.pack(fill='x')
-    advanced = ttk.Frame(advanced_container)
-    show_advanced = tk.BooleanVar(value=False)
-    toggle = ttk.Checkbutton(advanced_container, text='Advanced PC tools (optional)', variable=show_advanced,
-                            command=lambda: advanced.pack(fill='x') if show_advanced.get() else advanced.pack_forget())
-    toggle.pack(anchor='w', pady=(6, 2)); controls.append(toggle)
-    debug_row = ttk.Frame(advanced); debug_row.pack(fill='x')
-    for key in ('tab', 'page-up', 'page-down'):
-        button(debug_row, key.title(), lambda key=key: lab.key(key))
-    capture_button = ttk.Button(debug_row, text='Optional display capture (ADB)', command=capture)
-    capture_button.pack(side='left', pady=4); controls.append(capture_button)
-    ttk.Label(frame, textvariable=status).pack(anchor='w', pady=(10, 4))
-    output.pack(fill='both', expand=True)
-    output.insert('end', '1. Setup / Check environment\n2. Start emulator\n3. Select app > Build & run\n4. Choose Touchpad or Buttons; test that mode alone.\n\nGlasses ADB is optional; install the built APK through Hi Rokid/AnExplorer.\nApp/AVD data and logs stay local under .emulator/.\n')
-
-    def poll():
-        nonlocal busy
+    log_jobs = queue.Queue()
+    log_busy = False
+    next_log_time = 0.0
+    last_log_payload = None
+    def request_logs():
+        nonlocal log_busy, next_log_time
+        if log_busy or closing or not alive:
+            return
+        app = selected.get()
+        log_busy = True
+        next_log_time = time.monotonic() + 2
+        log_status.set('Reading virtual-app log…')
+        def worker():
+            try:
+                log_jobs.put((app, True, lab.logs(app)))
+            except Exception as problem:
+                log_jobs.put((app, False, str(problem)))
+        threading.Thread(target=worker, daemon=True).start()
+    button(log_header, 'Refresh', request_logs)
+    def app_changed(event=None):
+        app_log_label.set(selected.get())
+        if notebook.select() == str(app_tab):
+            request_logs()
+    selector.bind('<<ComboboxSelected>>', app_changed)
+    notebook.bind('<<NotebookTabChanged>>', app_changed)
+    def poll_logs():
+        nonlocal log_busy, last_log_payload
+        if not alive:
+            return
         try:
-            ok, message = jobs.get_nowait()
+            app, ok, payload = log_jobs.get_nowait()
         except queue.Empty:
             pass
         else:
-            status.set('Done' if ok else 'Needs attention')
-            output.insert('end', ('\n' if ok else '\nERROR: ') + str(message) + '\n')
-            output.see('end')
+            log_busy = False
+            if app == selected.get():
+                item = (app, ok, payload)
+                if item != last_log_payload:
+                    position = app_output.yview()
+                    horizontal_position = app_output.xview()[0]
+                    app_output.delete('1.0', 'end'); app_output.insert('end', payload)
+                    if position[1] >= .99:
+                        app_output.see('end')
+                    else:
+                        app_output.yview_moveto(position[0])
+                    app_output.xview_moveto(horizontal_position)
+                    last_log_payload = item
+                log_status.set('Recent selected-app log (up to 300 entries).' if ok else 'App log unavailable')
+        if (auto_logs.get() and notebook.select() == str(app_tab) and host.attached()
+                and not busy and not closing and time.monotonic() >= next_log_time):
+            request_logs()
+        window.after(300, poll_logs)
+    window.after(300, poll_logs)
+
+    def finish_close():
+        nonlocal alive
+        # Do not destroy a parent window while another process is still its child.
+        host.release()
+        alive = False
+        window.destroy()
+
+    def close():
+        nonlocal closing, close_requested, busy
+        if closing:
+            return
+        if busy:
+            close_requested = True
+            status.set('Closing after the current operation finishes…')
+            return
+        if host.attached():
+            def shutdown():
+                return lab.stop()
+            submit(shutdown, lambda result: finish_close())
+            closing = True
+            status.set('Closing the attached lab emulator…')
+        else:
+            finish_close()
+    window.protocol('WM_DELETE_WINDOW', close)
+
+    def poll():
+        nonlocal busy, closing, embedding_requested
+        try:
+            ok, result, callback = jobs.get_nowait()
+        except queue.Empty:
+            pass
+        else:
+            try:
+                if ok:
+                    report(result[0] if isinstance(result, tuple) else result or 'Ready')
+                    if callback:
+                        callback(result)
+                else:
+                    report(result, error=True)
+                    if closing:
+                        finish_close()
+                        return
+                    if not host.attached():
+                        embedding_requested = False
+                status.set('Done' if ok else 'Needs attention')
+            except Exception as error:
+                report(error, error=True)
+                embedding_requested = False
+                status.set('Needs attention')
+            if not alive:
+                return
             profile.set(lab.describe())
             busy = False
             for control in controls:
-                control.configure(state='normal')
-        window.after(100, poll)
-    window.after(100, poll)
+                control.configure(state='readonly' if isinstance(control, ttk.Combobox) else 'normal')
+            if close_requested:
+                closing = False
+                close()
+                if not alive:
+                    return
+        if embedding_requested:
+            try:
+                if host.attach():
+                    placeholder.place_forget()
+                    host.resize()
+            except Exception as error:
+                report(error, error=True)
+                embedding_requested = False
+        window.after(250, poll)
+    window.after(250, poll)
+    # Reuse only our already running VM; do not start a new one just by opening the panel.
+    window.after(300, lambda: submit(lambda: lab.target(required=False), attached))
     window.mainloop()
 
 
@@ -364,26 +731,30 @@ def main():
     commands = parser.add_subparsers(dest='command')
     for name in ('gui', 'doctor', 'setup', 'stop'):
         commands.add_parser(name)
-    start = commands.add_parser('start'); start.add_argument('--headless', action='store_true')
-    capture = commands.add_parser('capture'); capture.add_argument('--serial', required=True)
+    start = commands.add_parser('start'); start.add_argument('--headless', action='store_true'); start.add_argument('--embedded', action='store_true')
+    display = commands.add_parser('display')
+    display.add_argument('--width', type=int, required=True)
+    display.add_argument('--height', type=int, required=True)
+    display.add_argument('--density', type=int, required=True)
+    display.add_argument('--font-scale', type=float, default=1.0)
     launch = commands.add_parser('run'); launch.add_argument('app', choices=APPS); launch.add_argument('--build', action='store_true')
     key = commands.add_parser('key'); key.add_argument('name', choices=KEYS, help='Buttons mode: arrows/enter/back. PC-only debug extras: tab/page-up/page-down.')
-    pdf = commands.add_parser('pdf'); pdf.add_argument('path', type=Path)
+    transfer = commands.add_parser('file'); transfer.add_argument('path', type=Path)
     logs = commands.add_parser('logs'); logs.add_argument('app', choices=APPS)
     args = parser.parse_args()
     lab = Lab()
     if not args.command or args.command == 'gui':
         gui(lab)
-    elif args.command == 'capture':
-        print(lab.capture(args.serial))
+    elif args.command == 'display':
+        print(lab.configure_display(args.width, args.height, args.density, args.font_scale))
     elif args.command == 'start':
-        print(lab.start(args.headless))
+        print(lab.start(args.headless, args.embedded))
     elif args.command == 'run':
         print(lab.launch(args.app, args.build))
     elif args.command == 'key':
         print(lab.key(args.name))
-    elif args.command == 'pdf':
-        print(lab.send_pdf(args.path))
+    elif args.command == 'file':
+        print(lab.send_file(args.path))
     elif args.command == 'logs':
         print(lab.logs(args.app))
     else:

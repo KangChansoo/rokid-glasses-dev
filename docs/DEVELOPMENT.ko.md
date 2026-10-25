@@ -86,7 +86,7 @@ AnExplorer APK는 선택 사항이고 빌드에서 다운로드하거나 Git에 
 
 ## PC 에뮬레이터 개발
 
-`python tools/emulator.py`로 독립된 API 32 환경을 구성·실행하고 안경 배포 전에 앱을 빌드·실행할 수 있습니다. 화면 값 읽기·디버깅·하드웨어 한계는 [Android 개발 환경](EMULATOR.ko.md)을 참고합니다.
+`python tools/emulator.py`로 독립된 API 32 환경을 구성·실행하고 안경 배포 전에 앱을 빌드·실행할 수 있습니다. 로컬 화면 설정·오른쪽 로그·가상 환경 한계는 [Android 개발 환경](EMULATOR.ko.md)을 참고합니다.
 
 ## 문서 언어
 

@@ -83,7 +83,7 @@ The external AnExplorer APK is optional, is not downloaded by the build, and is 
 
 ## PC emulator workflow
 
-Use `python tools/emulator.py` to set up/start the isolated API 32 lab and build/run apps before device deployment. See the [local Android lab](EMULATOR.md) for display capture, debugging and hardware limits.
+Use `python tools/emulator.py` to set up/start the isolated API 32 lab and build/run apps before device deployment. See the [local Android lab](EMULATOR.md) for local display settings, right-side logs and virtual-environment limits.
 
 ## Documentation languages
 

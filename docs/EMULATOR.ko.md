@@ -2,83 +2,61 @@
 
 [English](EMULATOR.md) | 한국어
 
-PC에서 실제 APK를 개발·디버깅한 뒤 안경에서 하드웨어와 최종 사용성을 확인하기 위한 환경입니다. Python 패널로 독립된 Android Emulator AVD에서 우리 앱을 실행합니다. Rokid 펌웨어 이미지를 포함하지 않습니다.
+Rokid Android Lab은 **PC 가상 개발 환경 전용**입니다. AOSP API 32 x86_64 VM에서 실제 APK를 실행하고 원본 에뮬레이터 화면을 패널 안에 붙입니다. 실제 안경·폰과 페어링·정보 조회·동기화·제어하지 않습니다. 완성 APK를 하드웨어에 설치하는 일은 별도 흐름입니다.
 
-## 두 가지 입력 모드
-
-사용자가 실제 안경에서 확인한 조작 방식은 다음 두 가지입니다.
-
-| 모드 | 가능한 조작 |
-|---|---|
-| 터치패드 | 포인터 이동, 클릭·더블클릭, 두 손가락으로 상하·좌우 스크롤. |
-| 버튼 | 상·하·좌·우, Enter, 뒤로가기. |
-
-패널의 **Input mode → Touchpad / Buttons**로 선택합니다. 터치패드 모드는 에뮬레이터 창에서 마우스·트랙패드를 사용하고, 버튼 모드는 방향 패드·Enter·Back을 표시합니다. 각 모드만 사용해서 따로 시험합니다. 선택은 패널 조작부와 검증 기준을 바꾸며 Android/PC에서 다른 입력 장치 자체를 차단하지는 않습니다. 실제 다중 손가락·스크롤 변환은 PC와 에뮬레이터에 따라 달라 안경과 비교가 필요합니다.
-
-**Advanced PC tools**는 기본적으로 접혀 있고 Tab·Page Up/Down·선택적인 ADB 화면 설정 조회를 둡니다. 개발 편의 도구이며 안경의 필수 조작으로 삼지 않습니다. 더블클릭이 가능하다고 모든 앱에 별도 더블클릭 명령이 구현됐다는 뜻은 아닙니다. 필수 기능을 키보드 단축키나 확인하지 않은 temple 제스처에 의존하게 만들지 않습니다.
-
-기본 흐름은 **PC 개발·검증 → APK 전송 → Hi Rokid 또는 AnExplorer로 설치 → 안경에서 확인**입니다. 실제 안경의 ADB 페어링은 선택 사항입니다. 패널은 PC 내부 가상 기기를 제어할 때 ADB를 내부적으로 사용합니다.
-
-## 안경과의 유사성
-
-| 항목 | PC 환경 |
-|---|---|
-| Android API | 실기기에서 확인한 API 32에 맞춘 AOSP Android 12L x86_64 이미지입니다. |
-| APK | 프로젝트의 같은 debug APK, 네이티브 Android UI와 PDF 렌더러를 사용합니다. |
-| 화면 | 명시적으로 지정한 연결 기기에서 현재 픽셀 크기·화면 밀도·글꼴 배율을 읽어 맞출 수 있습니다. |
-| 초기 화면 | **임시값 480 × 640, 160 dpi, 글꼴 배율 1.0입니다. 안경에서 실측한 값이 아닙니다.** |
-| 마우스·키 | 위에서 확인한 터치패드·버튼 모드를 구분합니다. 앱별 동작과 정확한 하드웨어 이벤트 매핑은 별도 검증이 필요합니다. |
-| 하드웨어 | Rokid OS·서비스, 광학 화면, Bluetooth 기기 동작, 카메라/NPU 드라이버, 물리 배터리를 재현하지 않습니다. |
-| 성능 | PC 에뮬레이터의 CPU·GPU·메모리·저장소는 다릅니다. 지연·메모리·전력 결과를 안경의 측정값으로 취급하지 않습니다. |
-
-PC 편의를 위해 RAM 2 GB와 사용자 데이터 파티션 2 GB를 사용합니다. 안경에서 측정한 사양이 아닙니다. 이후 C/NDK 모듈은 이 VM용 x86_64 빌드와 안경 ABI에 맞는 빌드가 각각 필요합니다. PC 통과가 실제 하드웨어 호환성을 보장하지는 않습니다.
-
-## 시작
-
-Windows, Tk가 포함된 Python 3.10 이상, Java 17과 [개발 환경](DEVELOPMENT.ko.md)의 SDK 설정을 사용합니다. 기존 Git 제외 `toolchain.local.json`에서 Java/SDK 경로를 읽습니다. Python 외부 패키지·웹 서버·제조사 SDK·계정은 필요하지 않습니다.
+## 배치와 평소 사용법
 
 ```powershell
 python tools/emulator.py
 ```
 
-패널에서 다음 순서로 사용합니다.
+- **화면 위:** Start·Stop.
+- **화면 아래:** 앱 선택·Build & run·Run APK·Send file·상시 표시 방향키/Enter/Back.
+- **오른쪽:** Lab·App log 탭. 구분선을 드래그하면 로그 영역 크기를 조절합니다.
+- **Lab:** 실행 과정 로그와 Check·Setup·Display 설정.
+- **App log:** 선택 앱의 최근 로그, Refresh·Auto. 탭이 열려 있고 전용 VM 화면이 붙어 있으면 자동 갱신합니다. 최근 기록을 제한해서 보여주며 무한 보관 로그는 아닙니다. 종료·충돌 앱은 별도 디버거 확인이 필요할 수 있습니다.
 
-1. **Setup**: 없는 공식 Emulator / API 32 AOSP x86_64 패키지를 설치하고 전용 AVD만 만듭니다. 다운로드는 몇 분 걸릴 수 있습니다. 미승인 SDK 라이선스는 공식 SDK 도구에서 직접 확인해야 하며 이 도구가 새 라이선스를 자동 승인하지 않습니다.
-2. **Check environment**: VM 가속을 검사합니다. Windows에서는 필요하면 Windows Hypervisor Platform을 사용합니다. 기능 활성화에는 관리자와 재부팅이 필요할 수 있습니다. 도구가 Windows 기능을 변경하거나 재부팅하지 않습니다.
-3. **Start emulator**: 별도 에뮬레이터 창을 열고 Android 부팅 완료와 화면 설정을 확인합니다.
-4. 앱 선택 후 **Build & run**: 해당 앱의 기존 빌드·lint 검사를 실행하고 설치·Activity 실행까지 합니다. **Run existing APK**는 빌드를 생략합니다.
-5. 입력 모드를 선택해 각각 따로 시험합니다. 버튼 모드는 Enter 전에 방향키로 포커스를 잡습니다. 진단에는 **App logs**를 사용합니다. 로그는 선택한 실행 중 앱의 제한된 최근 기록이며 종료·충돌한 프로세스는 Android Studio Logcat이 필요할 수 있습니다.
-6. **Stop emulator**: 전용 VM만 종료합니다. Python 패널만 닫으면 에뮬레이터는 계속 실행됩니다.
+화면 안에서 마우스·트랙패드로 포인터·클릭/더블클릭·상하좌우 스크롤을 사용하거나 아래 버튼을 사용합니다. Input mode 선택 줄은 없습니다. 버튼만 시험할 때는 방향키로 포커스를 옮긴 뒤 Enter를 누릅니다. Tab·Page 단축키는 CLI 개발 보조 기능일 뿐 앱의 필수 조작이 아닙니다.
 
-이전 APK와 서명 키가 달라 설치에 실패하면 키 차이를 직접 해결합니다. 도구가 앱을 자동 삭제하거나 데이터를 초기화하지 않습니다. Android Studio에서 저장소 루트를 열고 실행 중인 에뮬레이터를 대상으로 디버깅할 수도 있습니다.
+Start 후 Android 부팅을 기다리고 앱을 선택해 Build & run을 누릅니다. 해당 앱의 빌드·lint 검사 후 설치·Activity 실행까지 합니다. Run APK는 빌드를 생략합니다. Setup·Check는 Lab 탭의 최초 준비·진단 기능이며 평소 매번 누를 필요는 없습니다.
 
-## 선택적인 화면 보정
+추가 Python 패키지 없이 Windows API로 원본 창을 붙입니다. SDK 시작 때 잠깐 독립 창이 보일 수 있고 크기를 바꿔도 화면 비율을 유지합니다. headless로 시작한 VM은 Stop 후 패널에서 Start해야 원본 화면이 생깁니다.
 
-이 단계는 선택 사항이며 PC 환경 실행과 APK 설치에 안경의 ADB 연결이 필수는 아닙니다. ADB로 보정하려는 경우에만 [ADB 안내](ADB.ko.md)대로 연결하고 **Advanced PC tools → Optional display capture (ADB)**에서 `adb devices` 첫 열의 정확한 대상을 입력합니다. 상태·API·화면 크기·밀도·글꼴 배율만 읽습니다. 허용한 화면 값만 로컬에 저장하며 IP·일련번호·페어링 코드·계정은 저장하지 않습니다.
+Stop은 전용 VM만 종료합니다. 패널을 닫으면 진행 중 작업을 마친 뒤 붙어 있는 VM도 종료하며 앱·파일은 남습니다. SDK 종료에 실패하면 패널 파괴 전 원본 창을 분리합니다. wipe·앱 자동 삭제·데이터 초기화는 하지 않습니다.
 
-읽은 뒤 VM을 Stop/Start하면 적용됩니다. VM이 이미 꺼져 있으면 Setup으로 설정한 뒤 Start할 수 있습니다. 다른 API를 읽으면 조용히 일치한다고 가정하지 않고 거부합니다. 화면 설정을 읽어도 제조사 글꼴·광학·입력 펌웨어·시스템 서비스는 재현하지 않습니다.
+## 로컬 화면 설정
 
-## PDF와 로컬 데이터
+초기값은 **임시 480 × 640·160 dpi·글꼴 배율 1.0**이며 안경에서 읽은 실측값이 아닙니다.
 
-**Send PDF**는 직접 선택한 PDF를 에뮬레이터 Paper Viewer의 앱 폴더에 `lab-document.pdf`로 넣습니다. 같은 이름의 이전 파일을 대체합니다. Paper Viewer에서 **앱 폴더**를 눌러 선택합니다. 에뮬레이터 전용 전송이며 논문을 GitHub·서버·실제 안경으로 업로드하지 않습니다. Viewer가 내부 사본을 만드는 기존 동작은 그대로입니다.
+VM을 Stop하고 **Lab → Display…**에서 폭·높이·밀도·글꼴 배율을 입력한 뒤 Apply locally를 누릅니다. 다시 Start하면 적용됩니다. API는 32를 유지합니다. 값은 Git 제외 `.emulator/display.local.json`에만 저장합니다. 이전 버전의 로컬 숫자 설정은 수동 설정으로 보존하며 이를 위해 실제 기기에 접속하지 않습니다.
 
-AVD 설정·VM 디스크·테스트 PDF·읽은 화면 값·에뮬레이터 로그는 모두 Git 제외 `.emulator/`에 둡니다. 이 폴더와 스크린샷·로그를 공개하지 않습니다. 일반 재시작 시 VM 데이터는 유지됩니다. 도구가 wipe/reset 명령을 사용하지 않습니다. VM 데이터를 직접 지우면 설치 앱과 문서도 사라집니다.
+실기기 조회 버튼·CLI capture 명령·기기/IP 입력은 없습니다. SDK 소유 가상 transport만 제어합니다. 내부적으로 루프백 전용 ADB 서버 5039와 VM 콘솔 5586을 사용합니다. 무선 자동 연결은 끄고 USB 필터로 일반 실기기 연결을 제외합니다. connect/pair 명령이나 기존 PC ADB 서버 재시작은 사용하지 않습니다. 이 포트는 PC 내부 설정이지 안경 주소가 아닙니다.
 
-## 터미널 명령
+Rokid 펌웨어·서비스, 광학, 실제 Bluetooth 주변기기, 카메라/NPU 드라이버, 실제 배터리는 재현하지 않습니다. PC VM 지연·메모리·전력은 하드웨어 측정값이 아닙니다. 이후 NDK 모듈은 VM용 x86_64 빌드와 Lab 밖의 실제 기기 ABI 빌드가 각각 필요합니다. 실제 기기 연동은 Lab 밖에 두고 여기서는 모의 데이터를 사용합니다.
+
+## Send file
+
+일반 파일을 원래 파일명으로 Android `/sdcard/Download/`에 넣습니다. 이름이 있으면 숫자를 붙이며 자동으로 열거나 설치하지 않습니다. 파일 관리자 또는 앱 파일 선택기의 내부 저장소 → Download에서 엽니다. Paper Viewer에서는 PDF 열기를 사용합니다.
+
+전송 자체에 PDF 전용 제한은 없습니다. 받는 앱의 형식·크기 제한은 그대로이며 Paper Viewer는 여전히 최대 200 MiB PDF만 읽습니다. 기존 앱 폴더 PDF는 이동·삭제하지 않습니다. VM으로만 전송하며 파일을 공개하거나 실제 안경으로 보내지 않습니다.
+
+VM 디스크·문서·화면 설정·로그·스크린샷은 Git 제외 `.emulator/`의 개인 자료입니다. 이 폴더를 공개하지 않습니다. APK 서명 키가 다르면 오류를 보여주며 데이터가 없어지는 앱 삭제를 자동으로 하지 않습니다.
+
+## 터미널과 검사
+
+Windows, Tk가 포함된 Python 3.10 이상, Java 17과 [개발 환경](DEVELOPMENT.ko.md)의 SDK 설정을 사용합니다. 기존 Git 제외 `toolchain.local.json`에서 본인 경로를 읽습니다. 새 저장소 폴더·Python 외부 패키지·계정·제조사 SDK는 필요하지 않습니다.
 
 ```powershell
-python tools/emulator.py setup
 python tools/emulator.py doctor
+python tools/emulator.py setup
+python tools/emulator.py display --width 480 --height 640 --density 160
 python tools/emulator.py start
 python tools/emulator.py run paper-viewer --build
-python tools/emulator.py key right
-python tools/emulator.py key enter
+python tools/emulator.py file "C:/MyFiles/example.txt"
 python tools/emulator.py logs paper-viewer
 python tools/emulator.py stop
 ```
 
-`capture --serial <target>`은 지정 기기를 읽고, `pdf <path>`는 선택 PDF를 전용 VM에 전송합니다. 자동 검증에는 `start --headless`를 사용할 수 있습니다. 설치·입력·파일 전송·종료는 온라인 emulator transport·가상 기기 속성·전용 AVD 이름을 확인한 뒤 실행합니다. 실제 안경과 다른 AVD를 쓰기 대상으로 선택하지 않습니다. 전역 ADB 서버를 재시작하지 않습니다.
+터미널 전용 start는 SDK 독립 실행용이며 통합 화면은 기본 GUI로 엽니다. `start --headless`는 자동 가상 검증용입니다. 기기 명령은 실기기 transport를 거부하고 온라인 qemu와 전용 AVD 이름을 확인합니다. `python -m unittest discover -s tests -v`, `python scripts/check.py`로 검사합니다. 로컬 근거는 [검증 기록](VALIDATION.ko.md)을 참고합니다. 현재는 로컬 검토 작업이며 push를 뜻하지 않습니다.
 
-PC 도구 검사는 `python -m unittest discover -s tests -v`, `python scripts/check.py`로 실행합니다. CI source job도 VM 다운로드·부팅 없이 검사합니다. 실제 부팅·렌더링 근거는 [검증 기록](VALIDATION.ko.md)에 별도로 남깁니다.
-
-공식 참고: [Android Emulator](https://developer.android.com/studio/run/emulator-commandline), [AVD 설정](https://developer.android.com/studio/run/managing-avds), [하드웨어 가속](https://developer.android.com/studio/run/emulator-acceleration). 구현은 설치된 SDK의 emulator/avdmanager 도구를 사용하며 최신 공식 문서에는 이를 대체하는 새 Android CLI도 안내됩니다.
+공식 참고: [Android Emulator](https://developer.android.com/studio/run/emulator-commandline), [ADB 명령 옵션](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md), [무선 자동 연결 설정](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/android16-s2-release/adb_mdns.cpp), [Windows 원본 창 부착](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setparent).

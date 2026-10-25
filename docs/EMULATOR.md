@@ -2,83 +2,61 @@
 
 English | [한국어](EMULATOR.ko.md)
 
-Develop and debug the actual APK on a PC, then use the glasses for hardware and final usability checks. The Python control panel runs our apps on an isolated Android Emulator AVD. It does not contain a Rokid firmware image.
+Rokid Android Lab is strictly a PC virtual-development environment. It runs the actual APK in an AOSP API 32 x86_64 VM and hosts the native emulator screen inside the panel. It does not pair with, query, synchronize with or control real glasses or a phone. Installing the finished APK on hardware is a separate workflow.
 
-## Two input modes
-
-The user reports two separate operating modes on the glasses:
-
-| Mode | Available operations |
-|---|---|
-| Touchpad | Pointer movement, click/double-click and two-finger scrolling vertically and horizontally. |
-| Buttons | Up, Down, Left, Right, Enter and Back. |
-
-Select **Input mode → Touchpad / Buttons** in the panel. Touchpad mode uses the emulator window's mouse/trackpad input; Buttons mode displays a D-pad, Enter and Back. Test each mode on its own. The selector changes panel controls and the test procedure; it does not block other input devices at the Android/host level. Exact multi-finger/scroll translation still depends on the host and emulator and needs glasses comparison.
-
-**Advanced PC tools** is collapsed by default and contains Tab, Page Up/Down and optional ADB display capture. These are development aids, not required glasses controls. Double-click availability does not imply that every app already has a special double-click action. Do not make essential functions depend on keyboard shortcuts or undocumented temple gestures.
-
-Normal use is **develop/test on PC → transfer the APK → install through Hi Rokid or AnExplorer → check on the glasses**. ADB pairing with the real glasses is optional. The panel uses ADB internally to control its local VM.
-
-## Environment fidelity
-
-| Aspect | Lab behavior |
-|---|---|
-| Android API | API 32, matching the observed glasses API; AOSP Android 12L x86_64 image. |
-| APK | The same project debug APK, native Android UI and PDF renderer. |
-| Display | Can read current pixel size, density and font scale from an explicitly selected connected device. |
-| Initial display | **Provisional 480 × 640, 160 dpi, font scale 1.0. These values have not been measured on the glasses.** |
-| Mouse / keys | Separate Touchpad and Buttons profiles follow the reported capabilities above. Per-app and exact hardware event mappings still need validation. |
-| Hardware | No Rokid OS/services, optical display, Bluetooth-device behavior, camera/NPU driver or physical battery model. |
-| Performance | PC emulator CPU, GPU, RAM and storage differ. Do not treat its timing/memory/power results as glasses measurements. |
-
-The lab uses 2 GB of RAM and a 2 GB userdata partition for PC convenience; these are not measured glasses specifications. A future C/NDK module will need an x86_64 build for this VM and the appropriate device ABI for the glasses. Passing here does not establish native hardware compatibility.
-
-## Start
-
-Use Windows, Python 3.10+ with Tk, Java 17 and the SDK setup in [development](DEVELOPMENT.md). The existing ignored `toolchain.local.json` supplies Java/SDK paths. No Python packages, web server, vendor SDK or account are required.
+## Layout and daily use
 
 ```powershell
 python tools/emulator.py
 ```
 
-In the panel:
+- **Above the screen:** Start and Stop.
+- **Below the screen:** app selection, Build & run, Run APK, Send file, and the permanent direction/Enter/Back buttons.
+- **Right side:** Lab and App log tabs. The divider can be dragged to resize the log area.
+- **Lab:** operation output plus Check, Setup and Display settings.
+- **App log:** recent logs for the selected app, Refresh and Auto. Auto refresh runs while the tab is visible and the virtual emulator is attached. It shows a bounded recent snapshot, not an unlimited archive. A stopped/crashed app may need separate debugger inspection.
 
-1. **Setup** installs missing official Emulator / API 32 AOSP x86_64 packages and creates only the lab AVD. Downloads can take several minutes. Unaccepted SDK licenses must be reviewed with the official SDK tools; the lab does not accept new licenses automatically.
-2. **Check environment** checks VM acceleration. On Windows, use Windows Hypervisor Platform if needed; enabling the Windows feature may require an administrator and restart. The tool does not change Windows features or reboot the PC.
-3. **Start emulator** opens a separate emulator window and checks Android boot completion and display settings.
-4. Select an app and choose **Build & run**. This runs that app's existing build/lint checks, installs it and launches its Activity. **Run existing APK** skips the build.
-5. Choose an input mode and test it independently. In Buttons mode, use arrows to focus a control before Enter. Use **App logs** for diagnostics. Logs are a bounded snapshot for the selected running app; stopped/crashed process logs may need Android Studio Logcat.
-6. **Stop emulator** closes only the lab VM. Closing the Python panel alone leaves the emulator running.
+Use the mouse/trackpad directly in the embedded screen for pointer movement, click/double-click and horizontal/vertical scrolling, or use the buttons below it. There is no Input mode selector. When testing a buttons-only workflow, use directions to move focus before Enter. Tab/Page shortcuts remain CLI-only development aids and are not required app controls.
 
-If installation fails because a prior APK has a different signing key, resolve the key mismatch explicitly; the tool never automatically uninstalls apps or clears data. Android Studio can open the repository root and target this running emulator for debugging.
+Choose Start, wait for Android to boot, select the app, then Build & run. This runs the app's build/lint checks before installation and Activity launch; Run APK skips the build. Setup and Check are in the Lab tab for initial preparation/diagnostics and are not daily startup steps.
 
-## Optional display calibration
+Native hosting uses Windows APIs without extra Python packages. Startup can briefly show an SDK window before attachment. Screen aspect ratio is preserved when resizing. If an existing VM was started headless, stop it and start it from the panel to obtain a native display.
 
-This is optional; running the lab and installing APKs do not require glasses ADB. If you choose to calibrate via ADB, connect as described in [ADB](ADB.md). Expand **Advanced PC tools → Optional display capture (ADB)** and supply the exact first-column target from `adb devices`. This operation only reads state, API, size, density and font scale. It stores a whitelist of display values locally; no IP, serial, pairing code or account is saved.
+Stop closes only the owned VM. Closing the panel waits for its current operation, then stops its attached VM. Saved apps/files remain. If SDK shutdown fails, the native window is detached before the panel is destroyed. No wipe, automatic uninstall or data reset is performed.
 
-Stop/start the lab VM after capture. If it is already stopped, Setup can apply the new configuration before Start. A different captured API is rejected instead of silently pretending to match it. Display capture does not reproduce vendor fonts, optics, input firmware or system services.
+## Local display settings
 
-## PDFs and local data
+The initial display is **provisional 480 × 640, 160 dpi, font scale 1.0**. It is not a measurement read from glasses.
 
-**Send PDF** puts a deliberately selected PDF in the emulator Paper Viewer app folder as `lab-document.pdf`. It replaces the previous file of that name. Open **앱 폴더** inside Paper Viewer to select it. This transfer is for the emulator only; it does not upload a paper to GitHub, a server or the real glasses. The viewer's existing internal-copy behavior is unchanged.
+Stop the VM, open **Lab → Display…**, enter width/height/density/font scale, and choose Apply locally. Start again to apply. API remains 32. These values are stored only in ignored `.emulator/display.local.json`. Existing local numeric display values from an older version are preserved as manual settings; no device is contacted to migrate them.
 
-All lab AVD configuration, VM disks, test PDFs, display capture and emulator logs stay in ignored `.emulator/`. Do not publish that folder or its screenshots/logs. Its VM data persists across normal restarts. The tool does not use wipe/reset commands. Removing VM data manually would remove its installed apps and documents.
+There is no real-device capture button, CLI capture command or device/IP input. The Lab controls only its SDK-owned virtual transport. Internally it uses a dedicated loopback ADB server on port 5039 and a VM console port of 5586. Wireless auto-connect is disabled and the server's USB filter excludes normal physical devices. It never issues connect/pair commands or restarts the normal PC ADB server. These ports are internal PC details, not a glasses endpoint.
 
-## Terminal commands
+The VM cannot reproduce Rokid firmware/services, optical characteristics, physical Bluetooth peripherals, camera/NPU drivers or real battery behavior. PC VM timing/memory/power are not hardware measurements. Future NDK modules require a VM x86_64 build as well as the actual device ABI outside this Lab. Future physical-device integration must stay outside the Lab; use mocks here.
+
+## Send file
+
+Send file accepts a regular file and copies it to Android `/sdcard/Download/` using its original filename. If a name exists, a numbered filename is used. The file is not automatically opened or installed. Use a file manager or the app file picker → internal storage → Download. In Paper Viewer, use PDF 열기.
+
+There is no PDF-only transfer restriction. Receiving apps retain their own format/size limits; Paper Viewer still accepts only PDFs up to 200 MiB. Older app-folder PDFs are left in place without migration or deletion. Transfer is to the VM only and does not publish a file or send it to real glasses.
+
+VM disks, documents, display settings, logs and screenshots remain private under ignored `.emulator/`. Do not publish that folder. Signature-key mismatches are reported instead of uninstalling an app and losing its data.
+
+## Terminal and checks
+
+Use Windows, Python 3.10+ with Tk, Java 17 and the SDK configuration in [development](DEVELOPMENT.md). Existing ignored `toolchain.local.json` supplies local paths. No additional repository folders, Python packages, account or vendor SDK are needed.
 
 ```powershell
-python tools/emulator.py setup
 python tools/emulator.py doctor
+python tools/emulator.py setup
+python tools/emulator.py display --width 480 --height 640 --density 160
 python tools/emulator.py start
 python tools/emulator.py run paper-viewer --build
-python tools/emulator.py key right
-python tools/emulator.py key enter
+python tools/emulator.py file "C:/MyFiles/example.txt"
 python tools/emulator.py logs paper-viewer
 python tools/emulator.py stop
 ```
 
-`capture --serial <target>` reads a specifically selected device. `pdf <path>` transfers a selected PDF to the lab. `start --headless` is available for automated validation. Every install/input/file-transfer/stop command verifies an online emulator transport, the virtual-device property and the lab AVD name. Physical glasses and unrelated AVDs are not write targets. It does not restart the global ADB server.
+CLI-only start runs the SDK independently; open the default GUI for the integrated view. `start --headless` supports automated virtual validation. All device operations reject physical transports and verify the online qemu instance and owned AVD name. Source checks are `python -m unittest discover -s tests -v` and `python scripts/check.py`. See [validation](VALIDATION.md) for local evidence. Current work is local for review; no push is implied.
 
-Run the PC tooling checks with `python -m unittest discover -s tests -v` and `python scripts/check.py`. The CI source job runs these checks without downloading or booting a VM. Runtime boot/rendering evidence is recorded separately in [validation](VALIDATION.md).
-
-Official references: [Android Emulator](https://developer.android.com/studio/run/emulator-commandline), [AVD profiles](https://developer.android.com/studio/run/managing-avds), [hardware acceleration](https://developer.android.com/studio/run/emulator-acceleration). The implementation uses the SDK's installed emulator/avdmanager tools; current documentation also describes their newer Android CLI replacements.
+Official references: [Android Emulator](https://developer.android.com/studio/run/emulator-commandline), [ADB command options](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/main/docs/user/adb.1.md), [wireless auto-connect configuration](https://android.googlesource.com/platform/packages/modules/adb/+/refs/heads/android16-s2-release/adb_mdns.cpp), [Windows native hosting](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setparent).

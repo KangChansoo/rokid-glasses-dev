@@ -34,13 +34,13 @@ Viewer 시제품은 있으며 미완료 표시는 지속적인 개발 과제를 
 
 ## 처음 시작하기
 
-1. [개발 환경](docs/DEVELOPMENT.ko.md)을 준비하고 [PC Android 환경](docs/EMULATOR.ko.md)에서 터치패드·버튼 모드를 나눠 개발·시험합니다.
+1. [개발 환경](docs/DEVELOPMENT.ko.md)을 준비하고 [PC Android 환경](docs/EMULATOR.ko.md)에서 마우스·트랙패드와 방향 버튼으로 개발·시험합니다.
 2. 선택 앱을 빌드하고 `dist/`의 APK를 폰/안경으로 전송해 Hi Rokid 도구 상자 또는 AnExplorer로 설치합니다. [파일 전송](docs/FILE_TRANSFER.ko.md)을 참고합니다.
-3. [앱 설명](docs/APPS.ko.md)에 따라 안경에서 확인합니다. 실제 안경의 ADB 연결은 선택 사항입니다. 진단이나 선택적인 화면 설정 조회가 필요할 때만 [ADB 안내](docs/ADB.ko.md)를 사용합니다.
+3. [앱 설명](docs/APPS.ko.md)에 따라 안경에서 확인합니다. 실제 안경의 ADB 연결은 선택 사항입니다. 별도 실기기 진단이 필요할 때만 [ADB 안내](docs/ADB.ko.md)를 사용합니다.
 
 **브랜치:** `dev`에서 `feature/<name>`을 만들어 작업하고 `dev`로 통합한 뒤, 릴리즈할 때 `main`으로 반영합니다. [브랜치 운영](docs/DEVELOPMENT.ko.md#브랜치-운영)을 참고하세요.
 
-PC에서 먼저 개발하려면 [Android 개발 환경](docs/EMULATOR.ko.md)을 사용합니다: `python tools/emulator.py`. 실제 APK를 실행하며 안경에서 화면 값을 읽기 전까지 화면 설정은 임시값입니다.
+PC에서 먼저 개발하려면 [Android 개발 환경](docs/EMULATOR.ko.md)을 사용합니다: `python tools/emulator.py`. 실제 APK를 실행하며 화면은 로컬에서 수동 설정하며 실제 안경에 연결하지 않습니다.
 
 ## 저장소 구성
 

@@ -54,6 +54,20 @@ The user clarified two available modes: Touchpad (pointer, click/double-click an
 
 On the owned API 32 VM, GPT Viewer passed directional focus, Enter page actions and Back using only the six Buttons-mode keys. Paper Viewer passed directional button focus, next page, zoom and Back with the existing generated demo. No Tab/Page keys or mouse were used in these routes. Touchpad gesture fidelity and buttons-only PDF panning remain unverified/unimplemented respectively. No app source or APK changed for this panel/documentation update.
 
+## Integrated Lab local review
+
+The SDK's native Android display was hosted inside the Python Lab on Windows, with app/file controls and the two input modes below it. Live Android/app rendering and aspect-preserving layout were observed. This uses the native SDK window, not a reconstructed app UI or a screen-copy mock. Transient SDK startup windows are ignored until a matching native window is available; startup can briefly show a standalone SDK window. Windows DPI/SDK differences still need broader testing.
+
+Sixteen Python tests passed, including generic-file validation, Unicode/quoted filenames, collision names, failed-push reporting and native-window identity. A generated text file with spaces and an apostrophe was sent to Download twice and pulled back byte-for-byte; the second transfer used a numbered filename. Only these generated test files were cleaned up. The user's running document and existing app-folder PDFs were not migrated, deleted or published. No Android app source or APK was changed for this local tooling update.
+
+This work is on a local feature branch for review. No commit, shared-branch merge or push was performed for it. VM data, documents, screenshots and logs remain excluded from Git.
+
+## Virtual-only Lab and log tabs
+
+The current Lab removes physical-device capture completely. Width, height, density and font scale are manual local settings. Device commands reject physical transports and host connect/pair/tcpip operations. A private loopback ADB server uses port 5039, disabled mDNS auto-connect and a virtual-only USB filter; the owned VM uses console port 5586. The ordinary PC device server is not restarted or reused.
+
+Twenty Python tests passed. The VM booted on the private channel and the sample GPT APK launched; its selected-process log was read successfully. On Windows the right-side Lab/App log tabs, populated App log view, Start/Stop above the screen, permanent navigation buttons and absence of an Input mode selector were inspected. Native positioning was corrected after SDK startup and unnecessary upscaling was avoided to prevent clipping at the tested profile. No hardware endpoint was used and no Android app source changed. This remains local uncommitted work; no merge or push was performed.
+
 ## Still pending
 
 GPT Viewer device display/input; complete PDF picker/provider and original-access behavior; panning/zoom/navigation/resume; fonts/long documents; per-app temple/watch/phone control; controlled power/memory/latency measurements. There is no live API, phone companion, camera AI or C/NDK processing yet.
