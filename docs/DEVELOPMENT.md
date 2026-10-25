@@ -33,6 +33,37 @@ With Python 3.10+, run `python scripts/check.py` to validate relative documentat
 Use the [ADB guide](ADB.md) for initial installation and connection, and [app usage](APPS.md) for features and device-test boundaries. Updating an installed APK requires the same signing key. Local debug and GitHub Actions debug keys can differ; do not mix them as updates. Uninstalling an app removes its private data.
 
 
+## Branch workflow
+
+| Branch | Purpose |
+|---|---|
+| `main` | Releases; receives tested changes from `dev` when a release is approved. |
+| `dev` | Integration of completed development work. |
+| `feature/<name>` | One app, feature, fix or documentation task, started from `dev`. |
+
+Use names such as `feature/paper-viewer`, `feature/gpt-viewer` or `feature/paper-viewer-navigation`. Apps remain folders under `apps/`; branches are temporary workspaces for changes.
+
+Start a task from the latest development branch:
+
+```powershell
+git switch dev
+git pull --ff-only origin dev
+git switch -c feature/paper-viewer-navigation
+```
+
+Commit on the feature branch and run the relevant checks. For app changes, use `./scripts/build.ps1`; for documentation, use `python scripts/check.py`. A local build does not replace device testing where behavior changed. Push the feature branch if sharing it or opening a pull request, and target `dev`.
+
+After checks pass, integrate the completed task:
+
+```powershell
+git switch dev
+git pull --ff-only origin dev
+git merge --no-ff feature/paper-viewer-navigation
+git push origin dev
+```
+
+Keep working through new feature branches from `dev`. For a release, check the integrated build and relevant device behavior, then merge `dev` into `main` and push `main`. Release promotion requires an explicit release decision; it is not part of every feature merge. Do not commit development work directly to `main` or force-push shared history. Leave the local checkout on `dev` after integration.
+
 ## App-oriented layout
 
 Each independent app lives in `apps/adb-helper`, `apps/gpt-viewer` or `apps/paper-viewer`. Common UI is a library in `shared/android-ui`. Gradle settings, wrapper and private `toolchain.local.json` are at the repository root. Open that root as the Android/Gradle project.

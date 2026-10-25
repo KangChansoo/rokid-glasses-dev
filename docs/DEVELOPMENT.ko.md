@@ -36,6 +36,37 @@ Python 3.10 이상에서 `python scripts/check.py`로 문서 상대 링크, JSON
 
 
 
+## 브랜치 운영
+
+| 브랜치 | 용도 |
+|---|---|
+| `main` | 릴리즈용. 릴리즈 승인 후 검증된 `dev` 변경을 받습니다. |
+| `dev` | 완료한 개발 작업을 통합합니다. |
+| `feature/<name>` | `dev`에서 시작하는 앱·기능·수정·문서 작업 단위입니다. |
+
+이름은 `feature/paper-viewer`, `feature/gpt-viewer`, `feature/paper-viewer-navigation`처럼 짓습니다. 앱 코드는 `apps/` 아래 폴더로 관리하고, 브랜치는 변경 작업을 위한 임시 공간으로 사용합니다.
+
+새 작업은 최신 개발 브랜치에서 시작합니다.
+
+```powershell
+git switch dev
+git pull --ff-only origin dev
+git switch -c feature/paper-viewer-navigation
+```
+
+feature 브랜치에서 커밋하고 필요한 검사를 실행합니다. 앱 변경은 `./scripts/build.ps1`, 문서 변경은 `python scripts/check.py`를 사용합니다. 동작을 바꿨다면 로컬 빌드 외에 해당 실기기 검증도 필요합니다. 브랜치를 공유하거나 PR을 만들 때 feature 브랜치를 push하고 대상은 `dev`로 설정합니다.
+
+검사를 통과한 작업을 통합합니다.
+
+```powershell
+git switch dev
+git pull --ff-only origin dev
+git merge --no-ff feature/paper-viewer-navigation
+git push origin dev
+```
+
+다음 작업도 `dev`에서 새 feature 브랜치를 만들어 진행합니다. 릴리즈할 때는 통합 빌드와 필요한 실기기 동작을 확인한 뒤 `dev`를 `main`으로 merge하고 `main`을 push합니다. 릴리즈 반영은 별도 결정이며 매 기능 통합 때 자동으로 하지 않습니다. 개발 작업을 `main`에 직접 커밋하거나 공유 이력을 force-push하지 않습니다. 작업 통합 후 로컬 체크아웃은 `dev`에 둡니다.
+
 ## 앱별 구조
 
 독립 앱은 `apps/adb-helper`, `apps/gpt-viewer`, `apps/paper-viewer`에 나뉘고 공통 UI는 `shared/android-ui` 라이브러리에 둡니다. Gradle 설정·wrapper·개인 toolchain.local.json은 저장소 루트에 있습니다. 루트를 Android/Gradle 프로젝트로 엽니다.
