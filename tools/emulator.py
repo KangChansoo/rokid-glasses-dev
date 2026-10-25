@@ -204,7 +204,7 @@ class Lab:
 
     def key(self, key: str) -> str:
         self.adb_read(self.target(), 'shell', 'input', 'keyevent', KEYS[key])
-        return f'Sent Android {key}. This is not a measured Rokid temple gesture.'
+        return f'Sent Android {key} to the lab emulator.'
 
     def send_pdf(self, path: Path) -> str:
         if not path.is_file() or path.suffix.lower() != '.pdf':
@@ -286,8 +286,6 @@ def gui(lab: Lab):
     button(top, 'Setup', lab.setup)
     button(top, 'Start emulator', lab.start)
     button(top, 'Stop emulator', lab.stop)
-    capture_button = ttk.Button(top, text='Read glasses display', command=capture)
-    capture_button.pack(side='left', pady=4); controls.append(capture_button)
     row = ttk.Frame(frame); row.pack(fill='x', pady=8)
     selected = tk.StringVar(value='paper-viewer')
     selector = ttk.Combobox(row, textvariable=selected, values=list(APPS), state='readonly', width=18)
@@ -302,14 +300,45 @@ def gui(lab: Lab):
     app_button('App logs', lab.logs)
     transfer = ttk.Button(row, text='Send PDF', command=pdf)
     transfer.pack(side='left', pady=4); controls.append(transfer)
-    ttk.Label(frame, text='Android input — use mouse/drag/scroll directly in the emulator window.').pack(anchor='w')
-    for values in (('back', 'enter', 'tab', 'up', 'down'), ('left', 'right', 'page-up', 'page-down')):
-        row = ttk.Frame(frame); row.pack(fill='x')
-        for key in values:
-            button(row, key.title(), lambda key=key: lab.key(key))
+    mode_row = ttk.Frame(frame); mode_row.pack(fill='x', pady=(4, 6))
+    ttk.Label(mode_row, text='Input mode:').pack(side='left', padx=(0, 8))
+    mode = tk.StringVar(value='Touchpad')
+    mode_selector = ttk.Combobox(mode_row, textvariable=mode, values=('Touchpad', 'Buttons'), state='readonly', width=14)
+    mode_selector.pack(side='left')
+    mode_hint = tk.StringVar()
+    ttk.Label(frame, textvariable=mode_hint, wraplength=660).pack(anchor='w')
+    pad_container = ttk.Frame(frame); pad_container.pack(fill='x')
+    pad = ttk.Frame(pad_container)
+    for key, r, c in (('up', 0, 1), ('left', 1, 0), ('enter', 1, 1), ('right', 1, 2), ('down', 2, 1), ('back', 2, 3)):
+        control = ttk.Button(pad, text=key.title(), width=9,
+                             command=lambda key=key: submit(lambda: lab.key(key)))
+        control.grid(row=r, column=c, padx=3, pady=3)
+        controls.append(control)
+
+    def set_mode(event=None):
+        if mode.get() == 'Buttons':
+            mode_hint.set('Buttons: Up / Down / Left / Right, Enter and Back. Test this mode without mouse or touchpad input.')
+            pad.pack(anchor='w', pady=4)
+        else:
+            mode_hint.set('Touchpad: pointer, click/double-click and horizontal/vertical scrolling in the emulator window.')
+            pad.pack_forget()
+    mode_selector.bind('<<ComboboxSelected>>', set_mode)
+    set_mode()
+
+    advanced_container = ttk.Frame(frame); advanced_container.pack(fill='x')
+    advanced = ttk.Frame(advanced_container)
+    show_advanced = tk.BooleanVar(value=False)
+    toggle = ttk.Checkbutton(advanced_container, text='Advanced PC tools (optional)', variable=show_advanced,
+                            command=lambda: advanced.pack(fill='x') if show_advanced.get() else advanced.pack_forget())
+    toggle.pack(anchor='w', pady=(6, 2)); controls.append(toggle)
+    debug_row = ttk.Frame(advanced); debug_row.pack(fill='x')
+    for key in ('tab', 'page-up', 'page-down'):
+        button(debug_row, key.title(), lambda key=key: lab.key(key))
+    capture_button = ttk.Button(debug_row, text='Optional display capture (ADB)', command=capture)
+    capture_button.pack(side='left', pady=4); controls.append(capture_button)
     ttk.Label(frame, textvariable=status).pack(anchor='w', pady=(10, 4))
     output.pack(fill='both', expand=True)
-    output.insert('end', '1. Setup / Check environment\n2. Start emulator\n3. Select app > Build & run\n4. Test, inspect app logs, repeat.\n\nApp/AVD data and logs stay local under .emulator/.\n')
+    output.insert('end', '1. Setup / Check environment\n2. Start emulator\n3. Select app > Build & run\n4. Choose Touchpad or Buttons; test that mode alone.\n\nGlasses ADB is optional; install the built APK through Hi Rokid/AnExplorer.\nApp/AVD data and logs stay local under .emulator/.\n')
 
     def poll():
         nonlocal busy
@@ -338,7 +367,7 @@ def main():
     start = commands.add_parser('start'); start.add_argument('--headless', action='store_true')
     capture = commands.add_parser('capture'); capture.add_argument('--serial', required=True)
     launch = commands.add_parser('run'); launch.add_argument('app', choices=APPS); launch.add_argument('--build', action='store_true')
-    key = commands.add_parser('key'); key.add_argument('name', choices=KEYS)
+    key = commands.add_parser('key'); key.add_argument('name', choices=KEYS, help='Buttons mode: arrows/enter/back. PC-only debug extras: tab/page-up/page-down.')
     pdf = commands.add_parser('pdf'); pdf.add_argument('path', type=Path)
     logs = commands.add_parser('logs'); logs.add_argument('app', choices=APPS)
     args = parser.parse_args()

@@ -4,6 +4,21 @@ English | [한국어](EMULATOR.ko.md)
 
 Develop and debug the actual APK on a PC, then use the glasses for hardware and final usability checks. The Python control panel runs our apps on an isolated Android Emulator AVD. It does not contain a Rokid firmware image.
 
+## Two input modes
+
+The user reports two separate operating modes on the glasses:
+
+| Mode | Available operations |
+|---|---|
+| Touchpad | Pointer movement, click/double-click and two-finger scrolling vertically and horizontally. |
+| Buttons | Up, Down, Left, Right, Enter and Back. |
+
+Select **Input mode → Touchpad / Buttons** in the panel. Touchpad mode uses the emulator window's mouse/trackpad input; Buttons mode displays a D-pad, Enter and Back. Test each mode on its own. The selector changes panel controls and the test procedure; it does not block other input devices at the Android/host level. Exact multi-finger/scroll translation still depends on the host and emulator and needs glasses comparison.
+
+**Advanced PC tools** is collapsed by default and contains Tab, Page Up/Down and optional ADB display capture. These are development aids, not required glasses controls. Double-click availability does not imply that every app already has a special double-click action. Do not make essential functions depend on keyboard shortcuts or undocumented temple gestures.
+
+Normal use is **develop/test on PC → transfer the APK → install through Hi Rokid or AnExplorer → check on the glasses**. ADB pairing with the real glasses is optional. The panel uses ADB internally to control its local VM.
+
 ## Environment fidelity
 
 | Aspect | Lab behavior |
@@ -12,7 +27,7 @@ Develop and debug the actual APK on a PC, then use the glasses for hardware and 
 | APK | The same project debug APK, native Android UI and PDF renderer. |
 | Display | Can read current pixel size, density and font scale from an explicitly selected connected device. |
 | Initial display | **Provisional 480 × 640, 160 dpi, font scale 1.0. These values have not been measured on the glasses.** |
-| Mouse / keys | Emulator mouse input plus Android Back, Enter, Tab, arrows and Page Up/Down. These are not verified mappings of the Rokid temple or Galaxy Watch. |
+| Mouse / keys | Separate Touchpad and Buttons profiles follow the reported capabilities above. Per-app and exact hardware event mappings still need validation. |
 | Hardware | No Rokid OS/services, optical display, Bluetooth-device behavior, camera/NPU driver or physical battery model. |
 | Performance | PC emulator CPU, GPU, RAM and storage differ. Do not treat its timing/memory/power results as glasses measurements. |
 
@@ -32,14 +47,14 @@ In the panel:
 2. **Check environment** checks VM acceleration. On Windows, use Windows Hypervisor Platform if needed; enabling the Windows feature may require an administrator and restart. The tool does not change Windows features or reboot the PC.
 3. **Start emulator** opens a separate emulator window and checks Android boot completion and display settings.
 4. Select an app and choose **Build & run**. This runs that app's existing build/lint checks, installs it and launches its Activity. **Run existing APK** skips the build.
-5. Use the mouse in the emulator window, the panel's Android key buttons, and **App logs**. Use Tab/arrows to focus a control before Enter. Logs are a bounded snapshot for the selected running app; stopped/crashed process logs may need Android Studio Logcat.
+5. Choose an input mode and test it independently. In Buttons mode, use arrows to focus a control before Enter. Use **App logs** for diagnostics. Logs are a bounded snapshot for the selected running app; stopped/crashed process logs may need Android Studio Logcat.
 6. **Stop emulator** closes only the lab VM. Closing the Python panel alone leaves the emulator running.
 
 If installation fails because a prior APK has a different signing key, resolve the key mismatch explicitly; the tool never automatically uninstalls apps or clears data. Android Studio can open the repository root and target this running emulator for debugging.
 
-## Match the glasses display
+## Optional display calibration
 
-Reconnect wireless ADB as described in [ADB](ADB.md). Click **Read glasses display** and supply the exact first-column target from `adb devices`. This operation only reads state, API, size, density and font scale. It stores a whitelist of display values locally; no IP, serial, pairing code or account is saved.
+This is optional; running the lab and installing APKs do not require glasses ADB. If you choose to calibrate via ADB, connect as described in [ADB](ADB.md). Expand **Advanced PC tools → Optional display capture (ADB)** and supply the exact first-column target from `adb devices`. This operation only reads state, API, size, density and font scale. It stores a whitelist of display values locally; no IP, serial, pairing code or account is saved.
 
 Stop/start the lab VM after capture. If it is already stopped, Setup can apply the new configuration before Start. A different captured API is rejected instead of silently pretending to match it. Display capture does not reproduce vendor fonts, optics, input firmware or system services.
 
@@ -56,7 +71,8 @@ python tools/emulator.py setup
 python tools/emulator.py doctor
 python tools/emulator.py start
 python tools/emulator.py run paper-viewer --build
-python tools/emulator.py key page-down
+python tools/emulator.py key right
+python tools/emulator.py key enter
 python tools/emulator.py logs paper-viewer
 python tools/emulator.py stop
 ```

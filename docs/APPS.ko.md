@@ -8,7 +8,11 @@
 | GPT Viewer APK | dev.rokidapps.gptviewer | dist/gpt-viewer-android-debug.apk |
 | Paper Viewer APK | dev.rokidapps.paperviewer | dist/paper-viewer-android-debug.apk |
 
-Hi Rokid 도구 상자로 **안경에 설치**합니다. 연결된 안경을 명시한 ADB 설치도 가능합니다. 설치 후 실제 실행 메뉴·포인터·기본 터치·Back 동작은 앱별로 확인합니다.
+Hi Rokid 도구 상자로 **안경에 설치**합니다. 연결된 안경을 명시한 ADB 설치도 가능합니다. 설치 후 실행 메뉴·터치패드 모드·버튼 모드·뒤로가기를 앱별로 확인합니다.
+
+## 입력 기준
+
+터치패드(포인터·클릭/더블클릭·두 손가락 상하좌우 스크롤)와 버튼(상하좌우·Enter·뒤로가기)을 별도 모드로 취급합니다. 각 모드만으로 필수 기능을 확인하며 PC 전용 Tab·Page 키로 대체하지 않습니다. 사용자가 확인한 기기 입력 범위이며 모든 앱의 검증 완료를 뜻하지는 않습니다. Paper Viewer는 현재 포인터 드래그·휠 이동을 구현했고 버튼 모드 전용 화면 이동은 남아 있습니다. 별도 더블클릭 명령은 구현하지 않았습니다.
 
 ## ADB Helper
 

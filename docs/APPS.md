@@ -8,7 +8,11 @@ English | [한국어](APPS.ko.md)
 | GPT Viewer APK | dev.rokidapps.gptviewer | dist/gpt-viewer-android-debug.apk |
 | Paper Viewer APK | dev.rokidapps.paperviewer | dist/paper-viewer-android-debug.apk |
 
-Install on the glasses through Hi Rokid Toolbox, or use ADB with an explicit glasses target. Validate each app's launch, pointer, temple input and Back behavior separately. Current app controls are Korean; English repository docs do not imply an English app UI.
+Install on the glasses through Hi Rokid Toolbox, or use ADB with an explicit glasses target. Validate each app's launch, Touchpad mode, Buttons mode and Back behavior separately. Current app controls are Korean; English repository docs do not imply an English app UI.
+
+## Input contract
+
+Treat Touchpad (pointer, click/double-click, horizontal/vertical two-finger scroll) and Buttons (arrows, Enter, Back) as separate modes. Confirm all essential actions with each mode alone; PC-only Tab/Page keys are not a substitute. The user has reported these device capabilities, not full validation of every app. Paper Viewer currently has pointer-drag/wheel panning; dedicated buttons-only panning is still pending. Special double-click commands are not implemented.
 
 ## ADB Helper
 

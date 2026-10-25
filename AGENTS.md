@@ -1,6 +1,6 @@
 # Rokid Glasses Dev
 
-Develop standalone Android APKs under apps/. Use Hi Rokid Toolbox for the first installation and authenticated wireless ADB for development. Keep existing apps independent. Follow apps/AGENTS.md.
+Develop standalone Android APKs under apps/. Iterate in the PC emulator, then transfer/install APKs through Hi Rokid Toolbox or AnExplorer. Physical wireless ADB is optional for diagnostics. Keep existing apps independent. Follow apps/AGENTS.md.
 
 - This is a fresh Android-focused workspace. Do not add agent-studio frameworks, approval-only SDKs, undocumented APIs or old experiments to the default path.
 - Java is the minimal Android UI boundary. Prefer portable C via NDK/JNI for meaningful processing when requested; use Python for PC tooling and experiments. C processing is not implemented yet.
@@ -30,3 +30,6 @@ Develop standalone Android APKs under apps/. Use Hi Rokid Toolbox for the first 
 - Keep VM disks, display captures, PDFs, emulator logs and screenshots under ignored .emulator/. Never commit these artifacts or save raw device identifiers in a profile.
 - Capture from an explicit device is read-only. All install/input/transfer/stop operations must verify an online emulator transport, qemu property and exact owned AVD name. Never fall back to a physical or unrelated target, reset the global ADB server or automatically uninstall/clear data.
 - Run python -m unittest discover -s tests -v and python scripts/check.py for tooling changes. Verify real VM boot/app flows when available; distinguish PC emulator evidence from physical-glasses verification and performance.
+
+- User-confirmed input modes are separate: Touchpad (pointer, click/double-click, two-finger horizontal/vertical scroll) and Buttons (four directions, Enter, Back). Design and validate essential flows in each mode independently. Do not require PC-only Tab/Page keys, assume button-mode PDF panning is already implemented, or invent double-click/temple gesture commands.
+- The normal device workflow is APK transfer/installation through Hi Rokid or AnExplorer. Physical-glasses ADB pairing/capture is optional; the PC lab's internal ADB remains necessary for its own VM.

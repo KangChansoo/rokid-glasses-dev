@@ -34,11 +34,9 @@ Viewer 시제품은 있으며 미완료 표시는 지속적인 개발 과제를 
 
 ## 처음 시작하기
 
-1. [개발 환경](docs/DEVELOPMENT.ko.md)을 준비하고 `./scripts/build.ps1`를 실행합니다.
-2. `dist/adb-helper-android-debug.apk`를 폰으로 복사하고 **Hi Rokid → 홈 → 도구 상자 → 안경 앱 관리**에서 **안경에 설치**합니다. 메뉴 명칭은 앱 언어·버전에 따라 다를 수 있습니다.
-3. Helper의 **기기 정보 → 빌드 번호 7번 → 개발자 옵션 → 무선 디버깅** 순서로 설정합니다.
-4. [ADB 가이드](docs/ADB.ko.md)에 따라 현재 안경 화면의 페어링·연결 주소로 접속합니다.
-5. [앱 설명](docs/APPS.ko.md)과 [PDF 전송](docs/FILE_TRANSFER.ko.md)에 따라 본인 문서를 시험합니다. 파일 관리자로 열 때 특정 폴더는 필수가 아닙니다.
+1. [개발 환경](docs/DEVELOPMENT.ko.md)을 준비하고 [PC Android 환경](docs/EMULATOR.ko.md)에서 터치패드·버튼 모드를 나눠 개발·시험합니다.
+2. 선택 앱을 빌드하고 `dist/`의 APK를 폰/안경으로 전송해 Hi Rokid 도구 상자 또는 AnExplorer로 설치합니다. [파일 전송](docs/FILE_TRANSFER.ko.md)을 참고합니다.
+3. [앱 설명](docs/APPS.ko.md)에 따라 안경에서 확인합니다. 실제 안경의 ADB 연결은 선택 사항입니다. 진단이나 선택적인 화면 설정 조회가 필요할 때만 [ADB 안내](docs/ADB.ko.md)를 사용합니다.
 
 **브랜치:** `dev`에서 `feature/<name>`을 만들어 작업하고 `dev`로 통합한 뒤, 릴리즈할 때 `main`으로 반영합니다. [브랜치 운영](docs/DEVELOPMENT.ko.md#브랜치-운영)을 참고하세요.
 

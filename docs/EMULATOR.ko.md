@@ -4,6 +4,21 @@
 
 PC에서 실제 APK를 개발·디버깅한 뒤 안경에서 하드웨어와 최종 사용성을 확인하기 위한 환경입니다. Python 패널로 독립된 Android Emulator AVD에서 우리 앱을 실행합니다. Rokid 펌웨어 이미지를 포함하지 않습니다.
 
+## 두 가지 입력 모드
+
+사용자가 실제 안경에서 확인한 조작 방식은 다음 두 가지입니다.
+
+| 모드 | 가능한 조작 |
+|---|---|
+| 터치패드 | 포인터 이동, 클릭·더블클릭, 두 손가락으로 상하·좌우 스크롤. |
+| 버튼 | 상·하·좌·우, Enter, 뒤로가기. |
+
+패널의 **Input mode → Touchpad / Buttons**로 선택합니다. 터치패드 모드는 에뮬레이터 창에서 마우스·트랙패드를 사용하고, 버튼 모드는 방향 패드·Enter·Back을 표시합니다. 각 모드만 사용해서 따로 시험합니다. 선택은 패널 조작부와 검증 기준을 바꾸며 Android/PC에서 다른 입력 장치 자체를 차단하지는 않습니다. 실제 다중 손가락·스크롤 변환은 PC와 에뮬레이터에 따라 달라 안경과 비교가 필요합니다.
+
+**Advanced PC tools**는 기본적으로 접혀 있고 Tab·Page Up/Down·선택적인 ADB 화면 설정 조회를 둡니다. 개발 편의 도구이며 안경의 필수 조작으로 삼지 않습니다. 더블클릭이 가능하다고 모든 앱에 별도 더블클릭 명령이 구현됐다는 뜻은 아닙니다. 필수 기능을 키보드 단축키나 확인하지 않은 temple 제스처에 의존하게 만들지 않습니다.
+
+기본 흐름은 **PC 개발·검증 → APK 전송 → Hi Rokid 또는 AnExplorer로 설치 → 안경에서 확인**입니다. 실제 안경의 ADB 페어링은 선택 사항입니다. 패널은 PC 내부 가상 기기를 제어할 때 ADB를 내부적으로 사용합니다.
+
 ## 안경과의 유사성
 
 | 항목 | PC 환경 |
@@ -12,7 +27,7 @@ PC에서 실제 APK를 개발·디버깅한 뒤 안경에서 하드웨어와 최
 | APK | 프로젝트의 같은 debug APK, 네이티브 Android UI와 PDF 렌더러를 사용합니다. |
 | 화면 | 명시적으로 지정한 연결 기기에서 현재 픽셀 크기·화면 밀도·글꼴 배율을 읽어 맞출 수 있습니다. |
 | 초기 화면 | **임시값 480 × 640, 160 dpi, 글꼴 배율 1.0입니다. 안경에서 실측한 값이 아닙니다.** |
-| 마우스·키 | 에뮬레이터 마우스와 Android Back·Enter·Tab·방향키·Page Up/Down입니다. Rokid temple이나 Galaxy Watch의 검증된 입력 매핑이 아닙니다. |
+| 마우스·키 | 위에서 확인한 터치패드·버튼 모드를 구분합니다. 앱별 동작과 정확한 하드웨어 이벤트 매핑은 별도 검증이 필요합니다. |
 | 하드웨어 | Rokid OS·서비스, 광학 화면, Bluetooth 기기 동작, 카메라/NPU 드라이버, 물리 배터리를 재현하지 않습니다. |
 | 성능 | PC 에뮬레이터의 CPU·GPU·메모리·저장소는 다릅니다. 지연·메모리·전력 결과를 안경의 측정값으로 취급하지 않습니다. |
 
@@ -32,14 +47,14 @@ python tools/emulator.py
 2. **Check environment**: VM 가속을 검사합니다. Windows에서는 필요하면 Windows Hypervisor Platform을 사용합니다. 기능 활성화에는 관리자와 재부팅이 필요할 수 있습니다. 도구가 Windows 기능을 변경하거나 재부팅하지 않습니다.
 3. **Start emulator**: 별도 에뮬레이터 창을 열고 Android 부팅 완료와 화면 설정을 확인합니다.
 4. 앱 선택 후 **Build & run**: 해당 앱의 기존 빌드·lint 검사를 실행하고 설치·Activity 실행까지 합니다. **Run existing APK**는 빌드를 생략합니다.
-5. 에뮬레이터 창의 마우스, 패널의 Android 키 버튼, **App logs**를 사용합니다. Enter 전에 Tab·방향키로 버튼 포커스를 잡습니다. 로그는 선택한 실행 중 앱의 제한된 최근 기록이며 종료·충돌한 프로세스는 Android Studio Logcat이 필요할 수 있습니다.
+5. 입력 모드를 선택해 각각 따로 시험합니다. 버튼 모드는 Enter 전에 방향키로 포커스를 잡습니다. 진단에는 **App logs**를 사용합니다. 로그는 선택한 실행 중 앱의 제한된 최근 기록이며 종료·충돌한 프로세스는 Android Studio Logcat이 필요할 수 있습니다.
 6. **Stop emulator**: 전용 VM만 종료합니다. Python 패널만 닫으면 에뮬레이터는 계속 실행됩니다.
 
 이전 APK와 서명 키가 달라 설치에 실패하면 키 차이를 직접 해결합니다. 도구가 앱을 자동 삭제하거나 데이터를 초기화하지 않습니다. Android Studio에서 저장소 루트를 열고 실행 중인 에뮬레이터를 대상으로 디버깅할 수도 있습니다.
 
-## 안경 화면에 맞추기
+## 선택적인 화면 보정
 
-[ADB 안내](ADB.ko.md)대로 무선 ADB를 다시 연결합니다. **Read glasses display**를 누르고 `adb devices` 첫 열의 정확한 대상을 입력합니다. 상태·API·화면 크기·밀도·글꼴 배율만 읽습니다. 허용한 화면 값만 로컬에 저장하며 IP·일련번호·페어링 코드·계정은 저장하지 않습니다.
+이 단계는 선택 사항이며 PC 환경 실행과 APK 설치에 안경의 ADB 연결이 필수는 아닙니다. ADB로 보정하려는 경우에만 [ADB 안내](ADB.ko.md)대로 연결하고 **Advanced PC tools → Optional display capture (ADB)**에서 `adb devices` 첫 열의 정확한 대상을 입력합니다. 상태·API·화면 크기·밀도·글꼴 배율만 읽습니다. 허용한 화면 값만 로컬에 저장하며 IP·일련번호·페어링 코드·계정은 저장하지 않습니다.
 
 읽은 뒤 VM을 Stop/Start하면 적용됩니다. VM이 이미 꺼져 있으면 Setup으로 설정한 뒤 Start할 수 있습니다. 다른 API를 읽으면 조용히 일치한다고 가정하지 않고 거부합니다. 화면 설정을 읽어도 제조사 글꼴·광학·입력 펌웨어·시스템 서비스는 재현하지 않습니다.
 
@@ -56,7 +71,8 @@ python tools/emulator.py setup
 python tools/emulator.py doctor
 python tools/emulator.py start
 python tools/emulator.py run paper-viewer --build
-python tools/emulator.py key page-down
+python tools/emulator.py key right
+python tools/emulator.py key enter
 python tools/emulator.py logs paper-viewer
 python tools/emulator.py stop
 ```
